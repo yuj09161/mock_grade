@@ -15,6 +15,7 @@ sizePolicy_FF.setVerticalStretch(0)
 
 Validator_Ans=QRegExpValidator(QRegExp(r'[0-5_] [0-5_] [0-5_] [0-5_] [0-5_]'))
 Validator_Cor=QRegExpValidator(QRegExp(r'[1-5_] [1-5_] [1-5_] [1-5_] [1-5_]'))
+Validator_Score_In=QRegExpValidator(QRegExp(r'[1-9][0-9]?\.[0-9]'))
 
 
 class UI_Main(object):
@@ -113,6 +114,7 @@ class UI_Main(object):
 class Gb_Subject(QGroupBox):
     def __init__(self,parent,title,shape,end_num=0):
         super().__init__()
+        self.shape=(shape[1],)*shape[0]
         
         self.setParent(parent)
         #self.setObjectName(u"gb1")
@@ -147,6 +149,7 @@ class Gb_Subject(QGroupBox):
         self.lnCor=[]
         
         for k in range(shape[0]):
+            tmpAns=[]
             for j in range(shape[1]):
                 lbTitle = QLabel(self)
                 lbTitle.setObjectName(u"lbTitle")
@@ -165,6 +168,12 @@ class Gb_Subject(QGroupBox):
                 lnAns.setAlignment(Qt.AlignHCenter)
                 self.glMain.addWidget(lnAns, k+shape[0], j+1, 1, 1, Qt.AlignCenter)
                 
+                tmpAns.append(lnAns)
+            self.lnAns.append(tmpAns)
+        
+        for k in range(shape[0]):
+            tmpCor=[]
+            for j in range(shape[1]):
                 lnCor = QLineEdit(self)
                 lnCor.setObjectName(u"lnCor")
                 sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
@@ -175,8 +184,8 @@ class Gb_Subject(QGroupBox):
                 lnCor.setAlignment(Qt.AlignHCenter)
                 self.glMain.addWidget(lnCor, k+shape[0]*2, j+1, 1, 1, Qt.AlignCenter)
                 
-                self.lnAns.append(lnAns)
-                self.lnCor.append(lnCor)
+                tmpCor.append(lnCor)
+            self.lnCor.append(tmpCor)
         
         last_ans_cnt=end_num-shape[0]*shape[1]*5+4
         
@@ -190,16 +199,38 @@ class Gb_Subject(QGroupBox):
         lnCor.setValidator(QRegExpValidator(QRegExp(r'[1-5] '*last_ans_cnt+r'[1-5]')))
         lnCor.setInputMask('d '*last_ans_cnt+'d;_')
         
+        self.widBot = QWidget(self)
+        self.widBot.setObjectName(u"widBot")
+        self.hlBot = QHBoxLayout(self.widBot)
+        self.hlBot.setSpacing(0)
+        self.hlBot.setObjectName(u"hlBot")
+        self.hlBot.setContentsMargins(0, 0, 0, 0)
+        
+        self.btnClear = QPushButton(self.widBot)
+        self.btnClear.setObjectName(u"btnClear")
+        self.hlBot.addWidget(self.btnClear)
+
+        self.spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.hlBot.addItem(self.spH)
+
+        self.btnGrade = QPushButton(self.widBot)
+        self.btnGrade.setObjectName(u"btnGrade")
+        self.hlBot.addWidget(self.btnGrade)
+        
+        self.glMain.addWidget(self.widBot, shape[0]*3, 0, 1, shape[1]+1)
+        
         self.retranslateUi(title)
         
     def retranslateUi(self,title):
         self.setTitle(QCoreApplication.translate("Main", title, None))
-        self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\n\ud638", None))
-        self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\n\ub2f5", None))
-        self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\n\ub2f5", None))
+        self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\ud638", None))
+        self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\ub2f5", None))
+        self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\ub2f5", None))
+        self.btnClear.setText(QCoreApplication.translate("Grading1", u"\ucd08\uae30\ud654", None))
+        self.btnGrade.setText(QCoreApplication.translate("Grading1", u"\ucc44\uc810", None))
 
-class Gb_Math(Gb_Subject):
-    def __init__(self):
+class Gb_Supply(Gb_Subject):
+    def __init__(self,parent,title,shape,end_num=0):
         super().__init__()
         
         
@@ -211,3 +242,169 @@ class Gb_Math(Gb_Subject):
         self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\n\ud638", None))
         self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\n\ub2f5", None))
         self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\n\ub2f5", None))
+
+
+class Ui_Grading1(object):
+    def setupUI(self, Grading1, err_nums):
+        if not Grading1.objectName():
+            Grading1.setObjectName(u"Grading1")
+        Grading1.resize(215, 103)
+        self.centralwidget = QWidget(Grading1)
+        self.centralwidget.setObjectName(u"centralwidget")
+        
+        self.glMain = QGridLayout(self.centralwidget)
+        self.glMain.setObjectName(u"glMain")
+        
+        self.widCent=QWidget(Grading1)
+        self.glCent=QGridLayout(self.widCent)
+        
+        self.lbNum = QLabel(self.widCent)
+        self.lbNum.setObjectName(u"lbNum")
+        self.lbNum.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbNum, 0, 0, 1, 1)
+
+        self.lbPoint = QLabel(self.widCent)
+        self.lbPoint.setObjectName(u"lbPoint")
+        self.lbPoint.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbPoint, 0, 1, 1, 1)
+        
+        self.glMain.addWidget(self.widCent,0,0,1,1)
+        
+        self.lnScore=[]
+        for k,err_num in enumerate(err_nums):
+            lbNo = QLabel(self.widCent)
+            lbNo.setObjectName(u"lbNo")
+            lbNo.setAlignment(Qt.AlignCenter)
+            lbNo.setText(QCoreApplication.translate("Grading1", str(err_num), None))
+            self.glCent.addWidget(lbNo, k+1, 0, 1, 1)
+            
+            lnScore = QLineEdit(self.widCent)
+            lnScore.setObjectName(u"lnScore")
+            lnScore.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+            lnScore.setValidator(Validator_Score_In)
+            self.lnScore.append(lnScore)
+            self.glCent.addWidget(lnScore, k+1, 1, 1, 1)
+
+        self.widBot = QWidget(self.centralwidget)
+        self.widBot.setObjectName(u"widBot")
+        self.hlBot = QHBoxLayout(self.widBot)
+        self.hlBot.setSpacing(0)
+        self.hlBot.setObjectName(u"hlBot")
+        self.hlBot.setContentsMargins(0, 0, 0, 0)
+        self.btnBack = QPushButton(self.widBot)
+        self.btnBack.setObjectName(u"btnBack")
+        self.hlBot.addWidget(self.btnBack)
+
+        self.spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hlBot.addItem(self.spH)
+
+        self.btnNext = QPushButton(self.widBot)
+        self.btnNext.setObjectName(u"btnNext")
+        self.hlBot.addWidget(self.btnNext)
+        self.glMain.addWidget(self.widBot, 1, 0, 1, 1)
+
+        Grading1.setCentralWidget(self.centralwidget)
+
+        self.retranslateUi(Grading1)
+
+        QMetaObject.connectSlotsByName(Grading1)
+    # setupUI
+
+    def retranslateUi(self, Grading1):
+        Grading1.setWindowTitle(QCoreApplication.translate("Grading1", u"\uc120\ud0dd\ud615 \ubc30\uc810", None))
+        self.lbNum.setText(QCoreApplication.translate("Grading1", u"\ubc88\ud638", None))
+        self.lbPoint.setText(QCoreApplication.translate("Grading1", u"\ubc30\uc810", None))
+        self.btnBack.setText(QCoreApplication.translate("Grading1", u"\uc774\uc804", None))
+        self.btnNext.setText(QCoreApplication.translate("Grading1", u"\ub2e4\uc74c", None))
+    # retranslateUi
+
+
+class Ui_Grading2(object):
+    def setupUI(self, Grading2, err_nums):
+        if not Grading2.objectName():
+            Grading2.setObjectName(u"Grading2")
+        Grading2.resize(260, 104)
+        self.centralwidget = QWidget(Grading2)
+        self.centralwidget.setObjectName(u"centralwidget")
+        
+        self.glMain = QGridLayout(self.centralwidget)
+        self.glMain.setObjectName(u"glMain")
+        
+        self.widCent=QWidget(Grading2)
+        self.glCent=QGridLayout(self.widCent)
+        
+        self.lbTitleNo = QLabel(self.widCent)
+        self.lbTitleNo.setObjectName(u"lbTitleNo")
+        self.lbTitleNo.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbTitleNo, 0, 0, 1, 1)
+
+        self.lbTitlePoint = QLabel(self.widCent)
+        self.lbTitlePoint.setObjectName(u"lbTitlePoint")
+        self.lbTitlePoint.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbTitlePoint, 0, 1, 1, 1)
+
+        self.lbTitleGet = QLabel(self.widCent)
+        self.lbTitleGet.setObjectName(u"lbTitleGet")
+        self.lbTitleGet.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbTitleGet, 0, 2, 1, 1)
+        
+        self.glMain.addWidget(self.widCent,0,0,1,1)
+        
+        self.lnPoint=[]
+        self.lnGet=[]
+        for k,err_num in enumerate(err_nums):
+            lbNo = QLabel(self.widCent)
+            lbNo.setObjectName(u"lbNo")
+            lbNo.setAlignment(Qt.AlignCenter)
+            lbNo.setText(QCoreApplication.translate("Grading2", str(err_num), None))
+            self.glCent.addWidget(lbNo, n+1, 0, 1, 1)
+
+            lnPoint = QLineEdit(self.widCent)
+            lnPoint.setObjectName(u"lnPoint")
+            lnPoint.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+            lnPoint.setValidator(Validator_Score_In)
+            self.lnPoint.append(lnPoint)
+            self.glCent.addWidget(lnPoint, n+1, 1, 1, 1)
+
+            lnGet = QLineEdit(self.widCent)
+            lnGet.setObjectName(u"lnGet")
+            lnGet.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+            lnGet.setValidator(Validator_Score_In)
+            self.lnGet.append(lnGet)
+            self.glCent.addWidget(lnGet, n+1, 2, 1, 1)
+
+        self.widBot = QWidget(self.centralwidget)
+        self.widBot.setObjectName(u"widBot")
+        self.hlBot = QHBoxLayout(self.widBot)
+        self.hlBot.setSpacing(0)
+        self.hlBot.setObjectName(u"hlBot")
+        self.hlBot.setContentsMargins(0, 0, 0, 0)
+        self.btnBack = QPushButton(self.widBot)
+        self.btnBack.setObjectName(u"btnBack")
+        self.hlBot.addWidget(self.btnBack)
+
+        self.spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.hlBot.addItem(self.spH)
+
+        self.btnNext = QPushButton(self.widBot)
+        self.btnNext.setObjectName(u"btnNext")
+        self.hlBot.addWidget(self.btnNext)
+        self.glMain.addWidget(self.widBot, 1, 0, 1, 1)
+
+        Grading2.setCentralWidget(self.centralwidget)
+
+        self.retranslateUi(Grading2)
+
+        QMetaObject.connectSlotsByName(Grading2)
+    # setupUI
+
+    def retranslateUi(self, Grading2):
+        Grading2.setWindowTitle(QCoreApplication.translate("Grading2", u"\uc11c\ub2f5\ud615 \ubc30\uc810", None))
+        self.lbTitleNo.setText(QCoreApplication.translate("Grading2", u"\ubc88\ud638", None))
+        self.lbTitlePoint.setText(QCoreApplication.translate("Grading2", u"\ub4dd\uc810", None))
+        self.lbTitleGet.setText(QCoreApplication.translate("Grading2", u"\ubc30\uc810", None))
+        self.btnBack.setText(QCoreApplication.translate("Grading2", u"\uc774\uc804", None))
+        self.btnNext.setText(QCoreApplication.translate("Grading2", u"\ub2e4\uc74c", None))
+    # retranslateUi
