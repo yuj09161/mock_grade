@@ -13,8 +13,8 @@ sizePolicy_FF = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 sizePolicy_FF.setHorizontalStretch(0)
 sizePolicy_FF.setVerticalStretch(0)
 
-Validator_Ans=QRegExpValidator(QRegExp(r'[0-5]'))
-Validator_Cor=QRegExpValidator(QRegExp(r'[1-5]'))
+Validator_Ans=QRegExpValidator(QRegExp(r'[0-5_] [0-5_] [0-5_] [0-5_] [0-5_]'))
+Validator_Cor=QRegExpValidator(QRegExp(r'[1-5_] [1-5_] [1-5_] [1-5_] [1-5_]'))
 
 
 class UI_Main(object):
@@ -50,18 +50,18 @@ class UI_Main(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.glCent = QGridLayout(self.centralwidget)
         self.glCent.setObjectName(u"glCent")
-        self.glCent.setContentsMargins(10, 10, 10, 10)
+        self.glCent.setContentsMargins(20, 20, 20, 20)
         
         self.scMain = QScrollArea(self.centralwidget)
         self.scMain.setObjectName(u"scMain")
         self.scMain.setWidgetResizable(True)
         
-        self.scwMain = QWidget()
+        self.scwMain = QWidget(self.scMain)
         self.scwMain.setObjectName(u"scwMain")
         self.scwMain.setGeometry(QRect(0, 0, 778, 527))
         
-        self.glCent = QGridLayout(self.scwMain)
-        self.glCent.setObjectName(u"glCent")
+        self.hlMain = QGridLayout(self.scwMain)
+        self.hlMain.setObjectName(u"glCent")
 
         self.scMain.setWidget(self.scwMain)
 
@@ -92,7 +92,7 @@ class UI_Main(object):
 
         self.retranslateUi(Main)
 
-        QMetaObject.connectSlotsByName(Main)
+        #QMetaObject.connectSlotsByName(Main)
     # setupUi
 
     def retranslateUi(self, Main):
@@ -110,9 +110,12 @@ class UI_Main(object):
     # retranslateUi
 
 
-class UI_Subject(QGroupBox):
-    def __init__(self,shape,end_num=0):
-        self.setObjectName(u"gb1")
+class Gb_Subject(QGroupBox):
+    def __init__(self,parent,title,shape,end_num=0):
+        super().__init__()
+        
+        self.setParent(parent)
+        #self.setObjectName(u"gb1")
         self.setSizePolicy(sizePolicy_PF)
         sizePolicy_PF.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
         
@@ -123,19 +126,19 @@ class UI_Subject(QGroupBox):
         self.lbNum.setObjectName(u"lbNum")
         sizePolicy_FF.setHeightForWidth(self.lbNum.sizePolicy().hasHeightForWidth())
         self.lbNum.setSizePolicy(sizePolicy_FF)
-        self.glMain.addWidget(self.lbNum, 0, 0, 2, 1)
+        self.glMain.addWidget(self.lbNum, 0, 0, shape[0], 1, Qt.AlignCenter)
 
         self.lbAns = QLabel(self)
         self.lbAns.setObjectName(u"lbAns")
         sizePolicy_FF.setHeightForWidth(self.lbAns.sizePolicy().hasHeightForWidth())
         self.lbAns.setSizePolicy(sizePolicy_FF)
-        self.glMain.addWidget(self.lbAns, 2, 0, 2, 1)
+        self.glMain.addWidget(self.lbAns, shape[0], 0, shape[0], 1, Qt.AlignCenter)
 
         self.lbCor = QLabel(self)
         self.lbCor.setObjectName(u"lbCor")
         sizePolicy_FF.setHeightForWidth(self.lbCor.sizePolicy().hasHeightForWidth())
         self.lbCor.setSizePolicy(sizePolicy_FF)
-        self.glMain.addWidget(self.lbCor, 4, 0, 2, 1)
+        self.glMain.addWidget(self.lbCor, shape[0]*2, 0, shape[0], 1, Qt.AlignCenter)
 
         if not end_num:
             end_num=shape[0]*shape[1]*5
@@ -150,40 +153,61 @@ class UI_Subject(QGroupBox):
                 sizePolicy_PF.setHeightForWidth(lbTitle.sizePolicy().hasHeightForWidth())
                 lbTitle.setSizePolicy(sizePolicy_PF)
                 lbTitle.setText(f'{(k*shape[1]+j)*5+1}~{(k*shape[1]+j+1)*5}')
-                self.glMain.addWidget(lbTitle, 0, 1, 1, 1)
+                self.glMain.addWidget(lbTitle, k, j+1, 1, 1, Qt.AlignCenter)
 
                 lnAns = QLineEdit(self)
                 lnAns.setObjectName(u"lnAns")
                 sizePolicy_FF.setHeightForWidth(lnAns.sizePolicy().hasHeightForWidth())
                 lnAns.setSizePolicy(sizePolicy_FF)
                 lnAns.setMaximumSize(QSize(100, 16777215))
+                lnAns.setInputMask('9 9 9 9 9;_')
                 lnAns.setValidator(Validator_Ans)
-                self.glMain.addWidget(lnAns, k, j, 1, 1)
+                lnAns.setAlignment(Qt.AlignHCenter)
+                self.glMain.addWidget(lnAns, k+shape[0], j+1, 1, 1, Qt.AlignCenter)
                 
                 lnCor = QLineEdit(self)
                 lnCor.setObjectName(u"lnCor")
                 sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
                 lnCor.setSizePolicy(sizePolicy_FF)
                 lnCor.setMaximumSize(QSize(100, 16777215))
+                lnCor.setInputMask('d d d d d;_')
                 lnCor.setValidator(Validator_Cor)
-                self.glMain.addWidget(lnCor, k, j, 1, 1)
+                lnCor.setAlignment(Qt.AlignHCenter)
+                self.glMain.addWidget(lnCor, k+shape[0]*2, j+1, 1, 1, Qt.AlignCenter)
                 
                 self.lnAns.append(lnAns)
                 self.lnCor.append(lnCor)
         
         last_ans_cnt=end_num-shape[0]*shape[1]*5+4
-        lbTitle.setText(f'{shape[0]*shape[1]*5-4}~{end_num}')
+        
+        if (shape[0]*shape[1]*5-4)==end_num:
+            lbTitle.setText(str(end_num))
+        else:
+            lbTitle.setText(f'{shape[0]*shape[1]*5-4}~{end_num}')
+        
         lnAns.setValidator(QRegExpValidator(QRegExp(r'[0-5] '*last_ans_cnt+r'[0-5]')))
+        lnAns.setInputMask('9 '*last_ans_cnt+'9;_')
         lnCor.setValidator(QRegExpValidator(QRegExp(r'[1-5] '*last_ans_cnt+r'[1-5]')))
+        lnCor.setInputMask('d '*last_ans_cnt+'d;_')
         
-        self.retranslateUi()
+        self.retranslateUi(title)
         
-    def retranslateUi(self):
-        self.gb1.setTitle(QCoreApplication.translate("Main", u"GroupBox", None))
-        self.lbTitle15.setText(QCoreApplication.translate("Main", u"TextLabel", None))
-        self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\n"
-"\ud638", None))
-        self.lbNum.setText(QCoreApplication.translate("Main", u"\uc751\n"
-"\ub2f5", None))
-        self.lbNum.setText(QCoreApplication.translate("Main", u"\uc815\n"
-"\ub2f5", None))
+    def retranslateUi(self,title):
+        self.setTitle(QCoreApplication.translate("Main", title, None))
+        self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\n\ud638", None))
+        self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\n\ub2f5", None))
+        self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\n\ub2f5", None))
+
+class Gb_Math(Gb_Subject):
+    def __init__(self):
+        super().__init__()
+        
+        
+        
+        self.retranslateUi(title)
+        
+    def retranslateUi(self,title):
+        self.setTitle(QCoreApplication.translate("Main", title, None))
+        self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\n\ud638", None))
+        self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\n\ub2f5", None))
+        self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\n\ub2f5", None))
