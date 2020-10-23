@@ -2,7 +2,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
-from UI import UI_Main,Gb_Subject,Ui_Grading1,Ui_Grading2
+from UI import UI_Main,Gb_Subject,Ui_Grading1
 
 import sys
 
@@ -91,7 +91,7 @@ class Main(QMainWindow,UI_Main):
         gbHangul.btnClear.clicked.connect(lambda: self.__clear(gbHangul))
         gbHangul.btnGrade.clicked.connect(lambda: self.__get_input(gbHangul))
         
-        gbMath=Gb_Subject(self,'수학',(1,5,21),(9,20))
+        gbMath=Gb_Subject(self,'수학',(5,21),(9,20))
         self.hlMain.addWidget(gbMath)
         gbMath.btnClear.clicked.connect(lambda: self.__clear(gbMath))
         gbMath.btnGrade.clicked.connect(lambda: self.__get_input(gbMath))
@@ -123,13 +123,14 @@ class Main(QMainWindow,UI_Main):
                 gb_subject.lnCor[k][j].setText('')
         
     def __get_input(self,gb_subject):
-        for k,l in enumerate(gb_subject.shape):
-            for j in range(l):
-                print(gb_subject.lnAns[k][j].text().replace('\n',''))
-                print(gb_subject.lnCor[k][j].text().replace('\n',''))
+        '''
+        for k,(lnAns,lnCor) in enumerate(zip(gb_subject.lnAns,gb_subject.lnCor)):
+            print(lnAns.text().replace('\n',''))
+            print(lnCor.text().replace('\n',''))
+        '''
         def show_err(*p):
             if p:
-                detail_text=f'입력 오류 @ ({k},{j}):\n응답 길이({len(a)}) != 정답 길이({len(b)})'
+                detail_text=f'입력 오류 @ {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})'
             else:
                 detail_text=f'입력 오류:\n응답 길이({len(a)}) != 정답 길이({len(b)})'
             
@@ -142,27 +143,26 @@ class Main(QMainWindow,UI_Main):
             msgbox.exec_()
         
         ans,cor=[],[]
-        for k,l in enumerate(gb_subject.shape):
-            for j in range(l):
-                #응답,정답 불러오기
-                a=gb_subject.lnAns[k][j].text().replace(' ','').replace('_','')
-                b=gb_subject.lnCor[k][j].text().replace(' ','').replace('_','')
-                #응답,정답 오류검사->저장
-                if len(a)!=len(b):
-                    show_err(k,j)
-                    return
-                if a and b:
-                    a=list(a); b=list(b)
-                    for k in range(len(a)):
-                        a[j]=int(a[j])
-                        b[j]=int(b[j])
-                    ans+=a; cor+=b
+        for k,(lnAns,lnCor) in enumerate(zip(gb_subject.lnAns,gb_subject.lnCor)):
+            #응답,정답 불러오기
+            a=lnAns.text().replace(' ','').replace('_','0')
+            b=lnCor.text().replace(' ','').replace('_','0')
+            #응답,정답 오류검사->저장
+            if len(a)!=len(b):
+                show_err(k)
+                return
+            if a and b:
+                a=list(a); b=list(b)
+                for j in range(len(a)):
+                    a[j]=int(a[j])
+                    b[j]=int(b[j])
+                ans+=a; cor+=b
         else:
             if len(ans)==len(cor):
+                print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
                 return ans,cor
             else:
                 show_err()
-                return
     
     def __enter_score(self): #다음 창으로 진행
         err_select={}
@@ -223,47 +223,6 @@ class Grading1(QMainWindow,Ui_Grading1):
                     self.stat_sig.emit((1,self.__subject,self.__err1,self.__err2))
         except ValueError:
             QMessageBox.critical(self,'Error','값 입력 오류')
-
-
-class Grading2(QMainWindow,Ui_Grading2):
-    stat_sig=Signal(tuple)
-    def __init__(self,data):
-        super().__init__(parent)
-        self.setupUI(self)
-        
-        self.__subject,self.__err1,self.__err2=data
-        
-        self.__score=[]
-        for k,err in enumerate(self.__err2):
-            self.__score.append(self.addWidgets(k,err))
-        
-        resize_height(self,self.centralwidget,self.widCent)
-        
-        self.btnBack.clicked.connect(self.__priv)
-        self.btnNext.clicked.connect(self.__next)
-    
-    def __priv(self):
-        self.setVisible(False)
-        if self.__err1:
-            self.stat_sig.emit((-2,self.__subject,self.__err1,self.__err2))
-        else:
-            self.stat_sig.emit((-1,self.__subject,self.__err1,self.__err2))
-    
-    def __next(self):
-        try:
-            for subject,wids in zip(self.__err2,self.__score):
-                t1=wids[0].text()
-                t2=wids[1].text()
-                assert float(t1)<=float(t2)
-                self.__err2[subject]=(t1,t2)
-            response=QMessageBox.question(self,'채점 완료?','채점 완료?')
-            if response==QMessageBox.Yes:
-                self.setVisible(False)
-                self.stat_sig.emit((0,self.__subject,self.__err1,self.__err2))
-        except (ValueError, AssertionError):
-            QMessageBox.critical(self,'Error','값 입력 오류')
-        else:
-            pass
 
 
 if __name__=='__main__':

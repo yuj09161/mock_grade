@@ -115,13 +115,16 @@ class Gb_Subject(QGroupBox):
     def __init__(self,parent,title,shape,supply_shape=None):
         super().__init__()
         row_count=len(shape)
+        column_count=max(shape[:-1])
 
         end_num=shape[-1]
             
         if supply_shape:
             sp_supply=1
+            self.inputs_count=shape[-1]+supply_shape[-1]
         else:
             sp_supply=0
+            self.inputs_count=shape[-1]
         
         self.setParent(parent)
         #self.setObjectName(u"gb1")
@@ -173,9 +176,8 @@ class Gb_Subject(QGroupBox):
                 lnAns.setAlignment(Qt.AlignHCenter)
                 self.glMain.addWidget(lnAns, k+(row_count+sp_supply), j+1, 1, 1, Qt.AlignCenter)
                 
-                tmpAns.append(lnAns)
+                self.lnAns.append(lnAns)
                 a+=1
-            self.lnAns.append(tmpAns)
         
         for k,l in enumerate(shape[:-1]):
             tmpCor=[]
@@ -190,8 +192,7 @@ class Gb_Subject(QGroupBox):
                 lnCor.setAlignment(Qt.AlignHCenter)
                 self.glMain.addWidget(lnCor, k+(row_count+sp_supply)*2, j+1, 1, 1, Qt.AlignCenter)
                 
-                tmpCor.append(lnCor)
-            self.lnCor.append(tmpCor)
+                self.lnCor.append(lnCor)
         
         if a*5-4==end_num:
             lbTitle.setText(str(end_num))
@@ -214,20 +215,19 @@ class Gb_Subject(QGroupBox):
             self.widTitleSupply=QWidget(self)
             self.glTitleSupply=QGridLayout(self.widTitleSupply)
             self.glTitleSupply.setContentsMargins(0,0,0,0)
-            self.glMain.addWidget(self.widTitleSupply,(row_count+sp_supply)*1-1,1,1,shape[1])
+            self.glMain.addWidget(self.widTitleSupply,(row_count+sp_supply)*1-1,1,1,column_count)
             
             self.widAnsSupply=QWidget(self)
             self.glAnsSupply=QGridLayout(self.widAnsSupply)
             self.glAnsSupply.setContentsMargins(0,0,0,0)
-            self.glMain.addWidget(self.widAnsSupply,(row_count+sp_supply)*2-1,1,1,shape[1])
+            self.glMain.addWidget(self.widAnsSupply,(row_count+sp_supply)*2-1,1,1,column_count)
             
             self.widCorSupply=QWidget(self)
             self.glCorSupply=QGridLayout(self.widCorSupply)
             self.glCorSupply.setContentsMargins(0,0,0,0)
-            self.glMain.addWidget(self.widCorSupply,(row_count+sp_supply)*3-1,1,1,shape[1])
+            self.glMain.addWidget(self.widCorSupply,(row_count+sp_supply)*3-1,1,1,column_count)
             
             for k,l in enumerate(supply_shape[:-1]):
-                tmpAnsSupply=[]
                 for j in range(l):
                     lbTitle = QLabel(self.widAnsSupply)
                     lbTitle.setObjectName(u"lbTitle")
@@ -245,11 +245,9 @@ class Gb_Subject(QGroupBox):
                     lnAns.setAlignment(Qt.AlignHCenter)
                     self.glAnsSupply.addWidget(lnAns, k, j, 1, 1, Qt.AlignCenter)
                     
-                    tmpAnsSupply.append(lnAns)
-                self.lnAnsSupply.append(tmpAnsSupply)
+                    self.lnAnsSupply.append(lnAns)
             
             for k,l in enumerate(supply_shape[:-1]):
-                tmpCorSupply=[]
                 for j in range(l):
                     lnCor = QLineEdit(self.widCorSupply)
                     lnCor.setObjectName(u"lnCor")
@@ -260,8 +258,7 @@ class Gb_Subject(QGroupBox):
                     lnCor.setAlignment(Qt.AlignHCenter)
                     self.glCorSupply.addWidget(lnCor, k, j, 1, 1, Qt.AlignCenter)
                     
-                    tmpCorSupply.append(lnCor)
-                self.lnCorSupply.append(tmpCorSupply)
+                    self.lnCorSupply.append(lnCor)
         
         self.widBot = QWidget(self)
         self.widBot.setObjectName(u"widBot")
@@ -281,7 +278,7 @@ class Gb_Subject(QGroupBox):
         self.btnGrade.setObjectName(u"btnGrade")
         self.hlBot.addWidget(self.btnGrade)
         
-        self.glMain.addWidget(self.widBot, (row_count+sp_supply)*3, 0, 1, shape[1]+1)
+        self.glMain.addWidget(self.widBot, (row_count+sp_supply)*3, 0, 1, column_count+1)
         
         self.retranslateUi(title)
         
@@ -381,94 +378,4 @@ class Ui_Grading1(object):
         self.lbPoint.setText(QCoreApplication.translate("Grading1", u"\ubc30\uc810", None))
         self.btnBack.setText(QCoreApplication.translate("Grading1", u"\uc774\uc804", None))
         self.btnNext.setText(QCoreApplication.translate("Grading1", u"\ub2e4\uc74c", None))
-    # retranslateUi
-
-
-class Ui_Grading2(object):
-    def setupUI(self, Grading2, err_nums):
-        if not Grading2.objectName():
-            Grading2.setObjectName(u"Grading2")
-        Grading2.resize(260, 104)
-        self.centralwidget = QWidget(Grading2)
-        self.centralwidget.setObjectName(u"centralwidget")
-        
-        self.glMain = QGridLayout(self.centralwidget)
-        self.glMain.setObjectName(u"glMain")
-        
-        self.widCent=QWidget(Grading2)
-        self.glCent=QGridLayout(self.widCent)
-        
-        self.lbTitleNo = QLabel(self.widCent)
-        self.lbTitleNo.setObjectName(u"lbTitleNo")
-        self.lbTitleNo.setAlignment(Qt.AlignCenter)
-        self.glCent.addWidget(self.lbTitleNo, 0, 0, 1, 1)
-
-        self.lbTitlePoint = QLabel(self.widCent)
-        self.lbTitlePoint.setObjectName(u"lbTitlePoint")
-        self.lbTitlePoint.setAlignment(Qt.AlignCenter)
-        self.glCent.addWidget(self.lbTitlePoint, 0, 1, 1, 1)
-
-        self.lbTitleGet = QLabel(self.widCent)
-        self.lbTitleGet.setObjectName(u"lbTitleGet")
-        self.lbTitleGet.setAlignment(Qt.AlignCenter)
-        self.glCent.addWidget(self.lbTitleGet, 0, 2, 1, 1)
-        
-        self.glMain.addWidget(self.widCent,0,0,1,1)
-        
-        self.lnPoint=[]
-        self.lnGet=[]
-        for k,err_num in enumerate(err_nums):
-            lbNo = QLabel(self.widCent)
-            lbNo.setObjectName(u"lbNo")
-            lbNo.setAlignment(Qt.AlignCenter)
-            lbNo.setText(QCoreApplication.translate("Grading2", str(err_num), None))
-            self.glCent.addWidget(lbNo, n+1, 0, 1, 1)
-
-            lnPoint = QLineEdit(self.widCent)
-            lnPoint.setObjectName(u"lnPoint")
-            lnPoint.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-            lnPoint.setValidator(Validator_Score_In)
-            self.lnPoint.append(lnPoint)
-            self.glCent.addWidget(lnPoint, n+1, 1, 1, 1)
-
-            lnGet = QLineEdit(self.widCent)
-            lnGet.setObjectName(u"lnGet")
-            lnGet.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-            lnGet.setValidator(Validator_Score_In)
-            self.lnGet.append(lnGet)
-            self.glCent.addWidget(lnGet, n+1, 2, 1, 1)
-
-        self.widBot = QWidget(self.centralwidget)
-        self.widBot.setObjectName(u"widBot")
-        self.hlBot = QHBoxLayout(self.widBot)
-        self.hlBot.setSpacing(0)
-        self.hlBot.setObjectName(u"hlBot")
-        self.hlBot.setContentsMargins(0, 0, 0, 0)
-        self.btnBack = QPushButton(self.widBot)
-        self.btnBack.setObjectName(u"btnBack")
-        self.hlBot.addWidget(self.btnBack)
-
-        self.spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.hlBot.addItem(self.spH)
-
-        self.btnNext = QPushButton(self.widBot)
-        self.btnNext.setObjectName(u"btnNext")
-        self.hlBot.addWidget(self.btnNext)
-        self.glMain.addWidget(self.widBot, 1, 0, 1, 1)
-
-        Grading2.setCentralWidget(self.centralwidget)
-
-        self.retranslateUi(Grading2)
-
-        QMetaObject.connectSlotsByName(Grading2)
-    # setupUI
-
-    def retranslateUi(self, Grading2):
-        Grading2.setWindowTitle(QCoreApplication.translate("Grading2", u"\uc11c\ub2f5\ud615 \ubc30\uc810", None))
-        self.lbTitleNo.setText(QCoreApplication.translate("Grading2", u"\ubc88\ud638", None))
-        self.lbTitlePoint.setText(QCoreApplication.translate("Grading2", u"\ub4dd\uc810", None))
-        self.lbTitleGet.setText(QCoreApplication.translate("Grading2", u"\ubc30\uc810", None))
-        self.btnBack.setText(QCoreApplication.translate("Grading2", u"\uc774\uc804", None))
-        self.btnNext.setText(QCoreApplication.translate("Grading2", u"\ub2e4\uc74c", None))
     # retranslateUi
