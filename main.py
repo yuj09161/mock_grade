@@ -115,7 +115,7 @@ class Main(QMainWindow,UI_Main):
         super().__init__()
         self.setupUi(self)
         
-        self.__error     = [None,None,None,None,None,None]
+        self.__result    = [None,None,None,None,None,None]
         self.__score_win = []
         
         gbKorean=Gb_Subject(self,'국어',(5,4,45))
@@ -187,43 +187,38 @@ class Main(QMainWindow,UI_Main):
             show_err(f'입력 오류:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
         else:
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
-            error={}
+            error_num=[]
             
+            self.__result[subject_code]=[]
             for k,(ans,cor) in enumerate(zip(ans,cor)):
                 if not ans==cor:
-                    error[k+1]=(ans,cor)
+                    error_num.append(k+1)
+                self.__result[subject_code].append((ans,cor))
             
             response=QMessageBox.question(
                 self,
                 "오답 개수 확인",
-                f"{len(error)}개 틀림\n채점 진행?"
+                f"{len(error_num)}개 틀림\n채점 진행?"
             )
             if response==QMessageBox.Yes:
-                self.__score_win.append(Input_Score(self,subject_code,error))
+                self.__score_win.append(Input_Score(self,subject_code,error_num))
                 self.__score_win[-1].show()
     
-    def set_grade(self,subject_code,error):
+    def set_grade(self,subject_code,error_count,total_score):
+        print(self.__result)
+        
         gb_subject=self.__code_to_gb[subject_code]
         
-        self.__error[subject_code]=error
-        print(self.__error)
         for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
             lnAns.setEnabled(False)
             lnCor.setEnabled(False)
         
-        if subject_code==4 or subject_code==5:
-            total_score=50
-        else:
-            total_score=100
-        for _,_,score in error.values():
-            total_score-=score
-        
-        reconnect_signal(gb_subject.btnClear.clicked, lambda: self.__edit_score(subject_code,gb_subject) )
-        reconnect_signal(gb_subject.btnGrade.clicked, lambda: self.__edit(subject_code,gb_subject)       )
+        reconnect_signal(gb_subject.btnClear.clicked, lambda: self.__get_input(subject_code,gb_subject) )
+        reconnect_signal(gb_subject.btnGrade.clicked, lambda: self.__edit(subject_code,gb_subject)      )
         
         gb_subject.btnClear.setText('점수 수정')
         gb_subject.btnGrade.setText('답안 수정')
-        gb_subject.lbRes.setText(f'오답 수: {len(error)} / 점수: {total_score}')
+        gb_subject.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
     
     def __edit(self,subject_code,gb_subject):
         for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
@@ -236,47 +231,39 @@ class Main(QMainWindow,UI_Main):
         gb_subject.btnClear.setText('초기화')
         gb_subject.btnGrade.setText('채점')
         gb_subject.lbRes.setText('')
-    
-    def __edit_score(self,subject_code,gb_subject):
-        response=QMessageBox.question(
-            self,
-            '점수 수정?',
-            '점수 수정?'
-        )
-        if response==QMessageBox.Yes:
-            self.__score_win.append(Input_Score(self,subject_code,self.__error[subject_code]))
-            self.__score_win[-1].show()
 
 
 class Input_Score(QMainWindow,UI_Input_Score):
-    def __init__(self,main_win,subject_code,error):
+    def __init__(self,main_win,subject_code,error_num):
         self.__main_win = main_win
         self.__subject  = subject_code
-        self.__err      = error
-        self.__err_num  = tuple(self.__err.keys())
+        self.__err_num  = error_num
         
         super().__init__()
         self.setupUI(self,self.__err_num)
         resize_height(self,self.centralwidget,self.widCent)
         
         self.btnCancel.clicked.connect(self.__cancel)
-        self.btnNext.clicked.connect(self.__next)
+        self.btnNext.clicked.connect(self.__grading)
     
     def __cancel(self):
         self.hide()
         self.deleteLater()
     
-    def __next(self):
+    def __grading(self):
         self.hide()
         try:
-            for num,widget in zip(self.__err_num,self.lnScore):
-                print(num,widget.text())
-                self.__err[num]=self.__err[num][:2]+(int(widget.text()),)
-            else:
-                response=QMessageBox.question(self,'채점 완료?','채점 완료?')
-                if response==QMessageBox.Yes:
-                    self.deleteLater()
-                    self.__main_win.set_grade(self.__subject,self.__err)
+            response=QMessageBox.question(self,'채점 완료?','채점 완료?')
+            if response==QMessageBox.Yes:
+                if self.__subject==4 or self.__subject==5:
+                    total_score=50
+                else:
+                    total_score=100
+                for lnScore in self.lnScore:
+                    total_score-=int(lnScore.text())
+                
+                self.deleteLater()
+                self.__main_win.set_grade(self.__subject,len(self.__err_num),total_score)
         except ValueError:
             err_win=DetailErr(
                 self, 'Error', '타입 오류',

@@ -97,7 +97,7 @@ class UI_Main(object):
     # setupUi
 
     def retranslateUi(self, Main):
-        Main.setWindowTitle(QCoreApplication.translate("Main", u"Main", None))
+        Main.setWindowTitle(QCoreApplication.translate("Main", u"\ubaa8\uc758\uace0\uc0ac \uac00\ucc44\uc810", None))
         self.acLoad.setText(QCoreApplication.translate("Main", u"\ubd88\ub7ec\uc624\uae30", None))
         self.acSave.setText(QCoreApplication.translate("Main", u"\uc800\uc7a5", None))
         self.acSaveAs.setText(QCoreApplication.translate("Main", u"\ub2e4\ub978 \uc774\ub984\uc73c\ub85c \uc800\uc7a5", None))
