@@ -112,9 +112,16 @@ class UI_Main(object):
 
 
 class Gb_Subject(QGroupBox):
-    def __init__(self,parent,title,shape,end_num=0):
+    def __init__(self,parent,title,shape,supply_shape=None):
         super().__init__()
-        self.shape=(shape[1],)*shape[0]
+        row_count=len(shape)
+
+        end_num=shape[-1]
+            
+        if supply_shape:
+            sp_supply=1
+        else:
+            sp_supply=0
         
         self.setParent(parent)
         #self.setObjectName(u"gb1")
@@ -128,34 +135,32 @@ class Gb_Subject(QGroupBox):
         self.lbNum.setObjectName(u"lbNum")
         sizePolicy_FF.setHeightForWidth(self.lbNum.sizePolicy().hasHeightForWidth())
         self.lbNum.setSizePolicy(sizePolicy_FF)
-        self.glMain.addWidget(self.lbNum, 0, 0, shape[0], 1, Qt.AlignCenter)
+        self.glMain.addWidget(self.lbNum, 0, 0, row_count, 1, Qt.AlignCenter)
 
         self.lbAns = QLabel(self)
         self.lbAns.setObjectName(u"lbAns")
         sizePolicy_FF.setHeightForWidth(self.lbAns.sizePolicy().hasHeightForWidth())
         self.lbAns.setSizePolicy(sizePolicy_FF)
-        self.glMain.addWidget(self.lbAns, shape[0], 0, shape[0], 1, Qt.AlignCenter)
+        self.glMain.addWidget(self.lbAns, row_count+sp_supply, 0, row_count, 1, Qt.AlignCenter)
 
         self.lbCor = QLabel(self)
         self.lbCor.setObjectName(u"lbCor")
         sizePolicy_FF.setHeightForWidth(self.lbCor.sizePolicy().hasHeightForWidth())
         self.lbCor.setSizePolicy(sizePolicy_FF)
-        self.glMain.addWidget(self.lbCor, shape[0]*2, 0, shape[0], 1, Qt.AlignCenter)
-
-        if not end_num:
-            end_num=shape[0]*shape[1]*5
+        self.glMain.addWidget(self.lbCor, (row_count+sp_supply)*2, 0, row_count, 1, Qt.AlignCenter)
         
         self.lnAns=[]
         self.lnCor=[]
         
-        for k in range(shape[0]):
+        a=0
+        for k,l in enumerate(shape[:-1]):
             tmpAns=[]
-            for j in range(shape[1]):
+            for j in range(l):
                 lbTitle = QLabel(self)
                 lbTitle.setObjectName(u"lbTitle")
                 sizePolicy_PF.setHeightForWidth(lbTitle.sizePolicy().hasHeightForWidth())
                 lbTitle.setSizePolicy(sizePolicy_PF)
-                lbTitle.setText(f'{(k*shape[1]+j)*5+1}~{(k*shape[1]+j+1)*5}')
+                lbTitle.setText(f'{a*5+1}~{a*5+5}')
                 self.glMain.addWidget(lbTitle, k, j+1, 1, 1, Qt.AlignCenter)
 
                 lnAns = QLineEdit(self)
@@ -166,14 +171,15 @@ class Gb_Subject(QGroupBox):
                 lnAns.setInputMask('9 9 9 9 9;_')
                 lnAns.setValidator(Validator_Ans)
                 lnAns.setAlignment(Qt.AlignHCenter)
-                self.glMain.addWidget(lnAns, k+shape[0], j+1, 1, 1, Qt.AlignCenter)
+                self.glMain.addWidget(lnAns, k+(row_count+sp_supply), j+1, 1, 1, Qt.AlignCenter)
                 
                 tmpAns.append(lnAns)
+                a+=1
             self.lnAns.append(tmpAns)
         
-        for k in range(shape[0]):
+        for k,l in enumerate(shape[:-1]):
             tmpCor=[]
-            for j in range(shape[1]):
+            for j in range(l):
                 lnCor = QLineEdit(self)
                 lnCor.setObjectName(u"lnCor")
                 sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
@@ -182,22 +188,80 @@ class Gb_Subject(QGroupBox):
                 lnCor.setInputMask('d d d d d;_')
                 lnCor.setValidator(Validator_Cor)
                 lnCor.setAlignment(Qt.AlignHCenter)
-                self.glMain.addWidget(lnCor, k+shape[0]*2, j+1, 1, 1, Qt.AlignCenter)
+                self.glMain.addWidget(lnCor, k+(row_count+sp_supply)*2, j+1, 1, 1, Qt.AlignCenter)
                 
                 tmpCor.append(lnCor)
             self.lnCor.append(tmpCor)
         
-        last_ans_cnt=end_num-shape[0]*shape[1]*5+4
-        
-        if (shape[0]*shape[1]*5-4)==end_num:
+        if a*5-4==end_num:
             lbTitle.setText(str(end_num))
         else:
-            lbTitle.setText(f'{shape[0]*shape[1]*5-4}~{end_num}')
+            lbTitle.setText(f'{a*5-4}~{end_num}')
         
+        last_ans_cnt=end_num-a*5+4
         lnAns.setValidator(QRegExpValidator(QRegExp(r'[0-5] '*last_ans_cnt+r'[0-5]')))
         lnAns.setInputMask('9 '*last_ans_cnt+'9;_')
         lnCor.setValidator(QRegExpValidator(QRegExp(r'[1-5] '*last_ans_cnt+r'[1-5]')))
         lnCor.setInputMask('d '*last_ans_cnt+'d;_')
+        
+        if supply_shape:
+            self.lnAnsSupply=[]
+            self.lnCorSupply=[]
+            
+            Validator_Ans_Supply=QRegExpValidator(QRegExp(r'[1-5]{1,3}'))
+            Validator_Cor_Supply=QRegExpValidator(QRegExp(r'[1-5]{1,3}'))
+            
+            self.widTitleSupply=QWidget(self)
+            self.glTitleSupply=QGridLayout(self.widTitleSupply)
+            self.glTitleSupply.setContentsMargins(0,0,0,0)
+            self.glMain.addWidget(self.widTitleSupply,(row_count+sp_supply)*1-1,1,1,shape[1])
+            
+            self.widAnsSupply=QWidget(self)
+            self.glAnsSupply=QGridLayout(self.widAnsSupply)
+            self.glAnsSupply.setContentsMargins(0,0,0,0)
+            self.glMain.addWidget(self.widAnsSupply,(row_count+sp_supply)*2-1,1,1,shape[1])
+            
+            self.widCorSupply=QWidget(self)
+            self.glCorSupply=QGridLayout(self.widCorSupply)
+            self.glCorSupply.setContentsMargins(0,0,0,0)
+            self.glMain.addWidget(self.widCorSupply,(row_count+sp_supply)*3-1,1,1,shape[1])
+            
+            for k,l in enumerate(supply_shape[:-1]):
+                tmpAnsSupply=[]
+                for j in range(l):
+                    lbTitle = QLabel(self.widAnsSupply)
+                    lbTitle.setObjectName(u"lbTitle")
+                    sizePolicy_PF.setHeightForWidth(lbTitle.sizePolicy().hasHeightForWidth())
+                    lbTitle.setSizePolicy(sizePolicy_PF)
+                    lbTitle.setText(str(end_num+k*len(supply_shape)+j+1))
+                    self.glTitleSupply.addWidget(lbTitle, k, j, 1, 1, Qt.AlignCenter)
+
+                    lnAns = QLineEdit(self)
+                    lnAns.setObjectName(u"lnAns")
+                    sizePolicy_FF.setHeightForWidth(lnAns.sizePolicy().hasHeightForWidth())
+                    lnAns.setSizePolicy(sizePolicy_FF)
+                    lnAns.setMaximumSize(QSize(50, 16777215))
+                    lnAns.setValidator(Validator_Ans_Supply)
+                    lnAns.setAlignment(Qt.AlignHCenter)
+                    self.glAnsSupply.addWidget(lnAns, k, j, 1, 1, Qt.AlignCenter)
+                    
+                    tmpAnsSupply.append(lnAns)
+                self.lnAnsSupply.append(tmpAnsSupply)
+            
+            for k,l in enumerate(supply_shape[:-1]):
+                tmpCorSupply=[]
+                for j in range(l):
+                    lnCor = QLineEdit(self.widCorSupply)
+                    lnCor.setObjectName(u"lnCor")
+                    sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
+                    lnCor.setSizePolicy(sizePolicy_FF)
+                    lnCor.setMaximumSize(QSize(50, 16777215))
+                    lnCor.setValidator(Validator_Cor_Supply)
+                    lnCor.setAlignment(Qt.AlignHCenter)
+                    self.glCorSupply.addWidget(lnCor, k, j, 1, 1, Qt.AlignCenter)
+                    
+                    tmpCorSupply.append(lnCor)
+                self.lnCorSupply.append(tmpCorSupply)
         
         self.widBot = QWidget(self)
         self.widBot.setObjectName(u"widBot")
@@ -217,7 +281,7 @@ class Gb_Subject(QGroupBox):
         self.btnGrade.setObjectName(u"btnGrade")
         self.hlBot.addWidget(self.btnGrade)
         
-        self.glMain.addWidget(self.widBot, shape[0]*3, 0, 1, shape[1]+1)
+        self.glMain.addWidget(self.widBot, (row_count+sp_supply)*3, 0, 1, shape[1]+1)
         
         self.retranslateUi(title)
         

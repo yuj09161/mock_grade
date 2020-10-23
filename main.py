@@ -86,32 +86,32 @@ class Main(QMainWindow,UI_Main):
         super().__init__()
         self.setupUi(self)
         
-        gbHangul=Gb_Subject(self,'국어',(2,5))
+        gbHangul=Gb_Subject(self,'국어',(5,4,45))
         self.hlMain.addWidget(gbHangul)
         gbHangul.btnClear.clicked.connect(lambda: self.__clear(gbHangul))
         gbHangul.btnGrade.clicked.connect(lambda: self.__get_input(gbHangul))
         
-        gbMath=Gb_Subject(self,'수학',(1,5),21)
+        gbMath=Gb_Subject(self,'수학',(1,5,21),(9,20))
         self.hlMain.addWidget(gbMath)
         gbMath.btnClear.clicked.connect(lambda: self.__clear(gbMath))
         gbMath.btnGrade.clicked.connect(lambda: self.__get_input(gbMath))
         
-        gbEnglish=Gb_Subject(self,'영어',(2,5))
+        gbEnglish=Gb_Subject(self,'영어',(5,4,45))
         self.hlMain.addWidget(gbEnglish)
         gbEnglish.btnClear.clicked.connect(lambda: self.__clear(gbEnglish))
         gbEnglish.btnGrade.clicked.connect(lambda: self.__get_input(gbEnglish))
         
-        gbHistory=Gb_Subject(self,'한국사',(1,4))
+        gbHistory=Gb_Subject(self,'한국사',(4,20))
         self.hlMain.addWidget(gbHistory)
         gbEnglish.btnClear.clicked.connect(lambda: self.__clear(gbEnglish))
         gbEnglish.btnGrade.clicked.connect(lambda: self.__get_input(gbEnglish))
         
-        gbPhysical=Gb_Subject(self,'물리학1',(1,4))
+        gbPhysical=Gb_Subject(self,'물리학1',(4,20))
         self.hlMain.addWidget(gbPhysical)
         gbPhysical.btnClear.clicked.connect(lambda: self.__clear(gbPhysical))
         gbPhysical.btnGrade.clicked.connect(lambda: self.__get_input(gbPhysical))
         
-        gbEarth=Gb_Subject(self,'지구과학1',(1,4))
+        gbEarth=Gb_Subject(self,'지구과학1',(4,20))
         self.hlMain.addWidget(gbEarth)
         gbEarth.btnClear.clicked.connect(lambda: self.__clear(gbEarth))
         gbEarth.btnGrade.clicked.connect(lambda: self.__get_input(gbEarth))
@@ -171,10 +171,10 @@ class Main(QMainWindow,UI_Main):
         ans,cor=self.__get_input()
         if ans and cor:
             for k in range(len(x[0])):
-                if :
-                    
+                if True:
+                    pass
                 else:
-                    
+                    pass
             response=QMessageBox.question(
                 self,
                 "오답 개수 확인",
@@ -263,7 +263,7 @@ class Grading2(QMainWindow,Ui_Grading2):
         except (ValueError, AssertionError):
             QMessageBox.critical(self,'Error','값 입력 오류')
         else:
-            
+            pass
 
 
 if __name__=='__main__':
