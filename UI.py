@@ -15,7 +15,7 @@ sizePolicy_FF.setVerticalStretch(0)
 
 Validator_Ans=QRegExpValidator(QRegExp(r'[0-5_] [0-5_] [0-5_] [0-5_] [0-5_]'))
 Validator_Cor=QRegExpValidator(QRegExp(r'[1-5_] [1-5_] [1-5_] [1-5_] [1-5_]'))
-Validator_Score_In=QRegExpValidator(QRegExp(r'[1-9][0-9]?\.[0-9]'))
+Validator_Score_In=QRegExpValidator(QRegExp(r'2|3|4'))
 
 
 class UI_Main(object):
@@ -209,8 +209,8 @@ class Gb_Subject(QGroupBox):
             self.lnAnsSupply=[]
             self.lnCorSupply=[]
             
-            Validator_Ans_Supply=QRegExpValidator(QRegExp(r'[1-5]{1,3}'))
-            Validator_Cor_Supply=QRegExpValidator(QRegExp(r'[1-5]{1,3}'))
+            Validator_Ans_Supply=QRegExpValidator(QRegExp(r'[1-9][0-9]{,2}|0'))
+            Validator_Cor_Supply=QRegExpValidator(QRegExp(r'[1-9][0-9]{,2}|0'))
             
             self.widTitleSupply=QWidget(self)
             self.glTitleSupply=QGridLayout(self.widTitleSupply)
@@ -271,8 +271,13 @@ class Gb_Subject(QGroupBox):
         self.btnClear.setObjectName(u"btnClear")
         self.hlBot.addWidget(self.btnClear)
 
-        self.spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.hlBot.addItem(self.spH)
+        spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.hlBot.addItem(spH)
+        
+        self.lbRes = QLabel(self)
+        self.hlBot.addWidget(self.lbRes)
+
+        self.hlBot.addItem(spH)
 
         self.btnGrade = QPushButton(self.widBot)
         self.btnGrade.setObjectName(u"btnGrade")
@@ -287,36 +292,22 @@ class Gb_Subject(QGroupBox):
         self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\ud638", None))
         self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\ub2f5", None))
         self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\ub2f5", None))
-        self.btnClear.setText(QCoreApplication.translate("Grading1", u"\ucd08\uae30\ud654", None))
-        self.btnGrade.setText(QCoreApplication.translate("Grading1", u"\ucc44\uc810", None))
-
-class Gb_Supply(Gb_Subject):
-    def __init__(self,parent,title,shape,end_num=0):
-        super().__init__()
-        
-        
-        
-        self.retranslateUi(title)
-        
-    def retranslateUi(self,title):
-        self.setTitle(QCoreApplication.translate("Main", title, None))
-        self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\n\ud638", None))
-        self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\n\ub2f5", None))
-        self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\n\ub2f5", None))
+        self.btnClear.setText(QCoreApplication.translate("Input_Score", u"\ucd08\uae30\ud654", None))
+        self.btnGrade.setText(QCoreApplication.translate("Input_Score", u"\ucc44\uc810", None))
 
 
-class Ui_Grading1(object):
-    def setupUI(self, Grading1, err_nums):
-        if not Grading1.objectName():
-            Grading1.setObjectName(u"Grading1")
-        Grading1.resize(215, 103)
-        self.centralwidget = QWidget(Grading1)
+class UI_Input_Score(object):
+    def setupUI(self, Input_Score, err_nums):
+        if not Input_Score.objectName():
+            Input_Score.setObjectName(u"Input_Score")
+        Input_Score.resize(215, 103)
+        self.centralwidget = QWidget(Input_Score)
         self.centralwidget.setObjectName(u"centralwidget")
         
         self.glMain = QGridLayout(self.centralwidget)
         self.glMain.setObjectName(u"glMain")
         
-        self.widCent=QWidget(Grading1)
+        self.widCent=QWidget(Input_Score)
         self.glCent=QGridLayout(self.widCent)
         
         self.lbNum = QLabel(self.widCent)
@@ -336,13 +327,14 @@ class Ui_Grading1(object):
             lbNo = QLabel(self.widCent)
             lbNo.setObjectName(u"lbNo")
             lbNo.setAlignment(Qt.AlignCenter)
-            lbNo.setText(QCoreApplication.translate("Grading1", str(err_num), None))
+            lbNo.setText(QCoreApplication.translate("Input_Score", str(err_num), None))
             self.glCent.addWidget(lbNo, k+1, 0, 1, 1)
             
             lnScore = QLineEdit(self.widCent)
             lnScore.setObjectName(u"lnScore")
             lnScore.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
             lnScore.setValidator(Validator_Score_In)
+            lnScore.setAlignment(Qt.AlignHCenter)
             self.lnScore.append(lnScore)
             self.glCent.addWidget(lnScore, k+1, 1, 1, 1)
 
@@ -352,9 +344,9 @@ class Ui_Grading1(object):
         self.hlBot.setSpacing(0)
         self.hlBot.setObjectName(u"hlBot")
         self.hlBot.setContentsMargins(0, 0, 0, 0)
-        self.btnBack = QPushButton(self.widBot)
-        self.btnBack.setObjectName(u"btnBack")
-        self.hlBot.addWidget(self.btnBack)
+        self.btnCancel = QPushButton(self.widBot)
+        self.btnCancel.setObjectName(u"btnCancel")
+        self.hlBot.addWidget(self.btnCancel)
 
         self.spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -365,17 +357,17 @@ class Ui_Grading1(object):
         self.hlBot.addWidget(self.btnNext)
         self.glMain.addWidget(self.widBot, 1, 0, 1, 1)
 
-        Grading1.setCentralWidget(self.centralwidget)
+        Input_Score.setCentralWidget(self.centralwidget)
 
-        self.retranslateUi(Grading1)
+        self.retranslateUi(Input_Score)
 
-        QMetaObject.connectSlotsByName(Grading1)
+        QMetaObject.connectSlotsByName(Input_Score)
     # setupUI
 
-    def retranslateUi(self, Grading1):
-        Grading1.setWindowTitle(QCoreApplication.translate("Grading1", u"\uc120\ud0dd\ud615 \ubc30\uc810", None))
-        self.lbNum.setText(QCoreApplication.translate("Grading1", u"\ubc88\ud638", None))
-        self.lbPoint.setText(QCoreApplication.translate("Grading1", u"\ubc30\uc810", None))
-        self.btnBack.setText(QCoreApplication.translate("Grading1", u"\uc774\uc804", None))
-        self.btnNext.setText(QCoreApplication.translate("Grading1", u"\ub2e4\uc74c", None))
+    def retranslateUi(self, Input_Score):
+        Input_Score.setWindowTitle(QCoreApplication.translate("Input_Score", u"\uc120\ud0dd\ud615 \ubc30\uc810", None))
+        self.lbNum.setText(QCoreApplication.translate("Input_Score", u"\ubc88\ud638", None))
+        self.lbPoint.setText(QCoreApplication.translate("Input_Score", u"\ubc30\uc810", None))
+        self.btnCancel.setText(QCoreApplication.translate("Input_Score", u"\ucde8\uc18c", None))
+        self.btnNext.setText(QCoreApplication.translate("Input_Score", u"\ub2e4\uc74c", None))
     # retranslateUi
