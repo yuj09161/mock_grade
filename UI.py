@@ -118,10 +118,12 @@ class Gb_Subject(QGroupBox):
         column_count=max(shape[:-1])
 
         end_num=shape[-1]
+        self.inputs_select=shape[-1]
             
         if supply_shape:
             sp_supply=1
             self.inputs_count=shape[-1]+supply_shape[-1]
+            self.inputs_supply=supply_shape[-1]
         else:
             sp_supply=0
             self.inputs_count=shape[-1]
