@@ -4,7 +4,7 @@ from PySide2.QtWidgets import *
 
 from UI import UI_Main,Gb_Subject,UI_Input_Score
 
-import sys
+import sys,json,traceback
 
 
 #define subject code
@@ -18,6 +18,8 @@ SEARCH_2 = 5
 #define search subjects name
 SEARCH_1_NAME='물리학 I'
 SEARCH_2_NAME='지구과학 I'
+
+DEFAULT_FILE_NAME='./save.mockdata'
 
 
 def resize_height(window,*wid):
@@ -117,6 +119,7 @@ class Main(QMainWindow,UI_Main):
         
         self.__result    = [None,None,None,None,None,None]
         self.__score_win = []
+        self.__last_file = DEFAULT_FILE_NAME
         
         gbKorean=Gb_Subject(self,'국어',(5,4,45))
         self.hlMain.addWidget(gbKorean)
@@ -149,6 +152,15 @@ class Main(QMainWindow,UI_Main):
         gbSearch2.btnGrade.clicked.connect(lambda: self.__get_input(SEARCH_2,gbSearch2))
         
         self.__code_to_gb=(gbKorean,gbMath,gbEnglish,gbEnglish,gbHistory,gbSearch1,gbSearch2)
+        
+        self.acLoad.triggered.connect(self.__load_as)
+        self.acSave.triggered.connect(self.__save)
+        self.acSaveAs.triggered.connect(self.__save_as)
+        
+        try:
+            self.__loader(DEFAULT_FILE_NAME)
+        except:
+            print(''.join(traceback.format_exception(*sys.exc_info())))
     
     def __clear(self,gb_subject):
         for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
@@ -189,11 +201,14 @@ class Main(QMainWindow,UI_Main):
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
             error_num=[]
             
-            self.__result[subject_code]=[]
+            subject_ans=[]
+            subject_cor=[]
             for k,(ans,cor) in enumerate(zip(ans,cor)):
                 if not ans==cor:
                     error_num.append(k+1)
-                self.__result[subject_code].append((ans,cor))
+                subject_ans.append(str(ans))
+                subject_cor.append(str(cor))
+            self.__result[subject_code]=(subject_ans,subject_cor)
             
             response=QMessageBox.question(
                 self,
@@ -207,6 +222,7 @@ class Main(QMainWindow,UI_Main):
     def set_grade(self,subject_code,error_count,total_score):
         print(self.__result)
         
+        self.__result[subject_code]+=(total_score,)
         gb_subject=self.__code_to_gb[subject_code]
         
         for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
@@ -231,6 +247,39 @@ class Main(QMainWindow,UI_Main):
         gb_subject.btnClear.setText('초기화')
         gb_subject.btnGrade.setText('채점')
         gb_subject.lbRes.setText('')
+    
+    def __load_as(self,file_path):
+        path,_=QFileDialog.getOpenFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
+        if path:
+            self.__last_file=file_path
+            self.__loader(path)
+    
+    def __loader(self,file_path):
+        with open(file_path,'r',encoding='utf-8') as file:
+            data=json.load(file)
+        self.__result=data
+        
+        for subject_code,subject_data in enumerate(data):
+            if subject_data:
+                subject_ans,subject_cor,subject_sore=subject_data
+                gb_subject=self.__code_to_gb[subject_code]
+                for k,(lnAns,lnCor) in enumerate(zip(gb_subject.lnAns,gb_subject.lnCor)):
+                    lnAns.setText(' '.join(subject_ans[k*5+1:k*5+5]).replace('0','_'))
+                    lnCor.setText(' '.join(subject_cor[k*5+1:k*5+5]).replace('0','_'))
+                self.set_grade(subject_code,tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),subject_sore)
+    
+    def __save(self):
+        self.__saver(self.__last_file)
+    
+    def __save_as(self):
+        path,_=QFileDialog.getSaveFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
+        if path:
+            self.__last_file=file_path
+            self.__saver(path)
+    
+    def __saver(self,file_path):
+        with open(file_path,'w',encoding='utf-8') as file:
+            json.dump(self.__result,file,indent=4,ensure_ascii=False)
 
 
 class Input_Score(QMainWindow,UI_Input_Score):
