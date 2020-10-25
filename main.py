@@ -120,7 +120,7 @@ class Info(QMainWindow):
 
 
 class Gb_Subject(QGroupBox,UI_Subject):
-    def __init__(self,parent,title,shape,supply_shape=None):
+    def __init__(self,parent,subject_code,title,shape,supply_shape=None):
         def do_connect(priv_wid,next_wid):
             priv_wid.textChanged.connect(
                 lambda text: automatic_next(priv_wid,next_wid,len(text.replace(' ','').replace('_','')))
@@ -131,6 +131,8 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 QTimer.singleShot(0,next_wid,SLOT('setFocus()'))
         
         super().__init__()
+        
+        self.__subject_code=subject_code
         
         self.inputs_select=shape[-1]
         if supply_shape:
@@ -156,6 +158,125 @@ class Gb_Subject(QGroupBox,UI_Subject):
             ):
                 QWidget.setTabOrder(priv_wid,next_wid)
                 do_connect(priv_wid,next_wid)
+        
+        gbKorean.btnClear.clicked.connect(self.__clear)
+        gbKorean.btnGrade.clicked.connect(self.__get_input)
+    
+    def __clear(self):
+        for lnAns,lnCor in zip(self.lnAns,self.lnCor):
+            lnAns.setText('')
+            lnCor.setText('')
+    
+    def __get_input(self):
+        def show_err(detail_text):
+            err_win=DetailErr(
+                self,
+                'ERROR',
+                '값 입력 오류',
+                detail_text
+            )
+            err_win.exec_()
+        
+        ans=[]
+        cor=[]
+        for k,(lnAns,lnCor) in enumerate(zip(self.lnAns,self.lnCor)):
+            #응답,정답 불러오기
+            a=lnAns.text().replace(' ','')
+            b=lnCor.text().replace(' ','')
+            #응답,정답 오류검사->저장
+            if len(a)!=len(b):
+                show_err(f'입력 오류 @ 선택형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
+                return
+            if a and b:
+                a=list(a)
+                b=list(b)
+                ans+=a; cor+=b
+        
+        if hasattr(self,'lnAnsSupply'):
+            print('서답')
+            for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(self.lnAnsSupply,self.lnCorSupply)):
+                #응답,정답 불러오기
+                a=lnAnsSupply.text()
+                b=lnCorSupply.text()
+                #응답,정답 오류검사->저장
+                if len(a)!=len(b):
+                    show_err(f'입력 오류 @ 서답형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
+                    return
+                if a and b:
+                    ans.append(a)
+                    cor.append(b)
+        
+        if not (ans and cor):
+            show_err('응답/정답 미입력')
+        #elif not len(ans)==len(cor)==self.inputs_count:
+        elif not len(ans)==len(cor):
+            show_err(f'입력 오류:\n응답 길이({len(a)})\n!= 정답 길이({len(b)})\n!= 총 문항수 ({self.inputs_count})')
+        else:
+            print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
+            error_num=[]
+            
+            subject_ans=[]
+            subject_cor=[]
+            for k,(ans,cor) in enumerate(zip(ans,cor)):
+                if not ans==cor:
+                    error_num.append(k+1)
+                subject_ans.append(str(ans))
+                subject_cor.append(str(cor))
+            subject_data=(subject_ans,subject_cor)
+            
+            response=QMessageBox.question(
+                self,
+                "오답 개수 확인",
+                f"{len(error_num)}개 틀림\n채점 진행?"
+            )
+            if response==QMessageBox.Yes:
+                if not error_num:
+                    if self.__subject_code==4 or self.__subject_code==5:
+                        total_score=50
+                    else:
+                        total_score=100
+                    self.set_grade(self.__subject_code,0,total_score,subject_data)
+                else:
+                    self.__score_win.append(Input_Score(self,self.__subject_code,error_num,subject_data))
+                    self.__score_win[-1].show()
+    
+    def set_grade(self,error_count,total_score,subject_data=None):
+        if subject_data:
+            self.__result[subject_code]=subject_data+(total_score,)
+            print(self.__result[subject_code])
+        self=self.__code_to_gb[subject_code]
+        
+        for lnAns,lnCor in zip(self.lnAns,self.lnCor):
+            lnAns.setEnabled(False)
+            lnCor.setEnabled(False)
+        if hasattr(self,'lnAnsSupply'):
+            for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
+                lnAnsSupply.setEnabled(False)
+                lnCorSupply.setEnabled(False)
+        
+        reconnect_signal(self.btnClear.clicked, lambda: self.__get_input(subject_code,self) )
+        reconnect_signal(self.btnGrade.clicked, lambda: self.__edit(subject_code,self)      )
+        
+        self.btnClear.setText('점수 수정')
+        self.btnGrade.setText('답안 수정')
+        self.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
+        self.__saved=False
+    
+    def __edit(self):
+        for lnAns,lnCor in zip(self.lnAns,self.lnCor):
+            lnAns.setEnabled(True)
+            lnCor.setEnabled(True)
+        if hasattr(self,'lnAnsSupply'):
+            for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
+                lnAnsSupply.setEnabled(True)
+                lnCorSupply.setEnabled(True)
+        
+        reconnect_signal(self.btnClear.clicked, lambda: self.__clear(self)                  )
+        reconnect_signal(self.btnGrade.clicked, lambda: self.__get_input(subject_code,self) )
+        
+        self.btnClear.setText('초기화')
+        self.btnGrade.setText('채점')
+        self.lbRes.setText('')
 
 
 class Main(QMainWindow,UI_Main):
@@ -171,35 +292,23 @@ class Main(QMainWindow,UI_Main):
         self.__opensource_win = None
         self.__license_win    = None
         
-        gbKorean=Gb_Subject(self,'국어',(5,4,45))
+        gbKorean=Gb_Subject(self,KOREAN,'국어',(5,4,45))
         self.hlMain.addWidget(gbKorean)
-        gbKorean.btnClear.clicked.connect(lambda: self.__clear(gbKorean))
-        gbKorean.btnGrade.clicked.connect(lambda: self.__get_input(KOREAN,gbKorean))
         
-        gbMath=Gb_Subject(self,'수학',(5,21),(9,20))
+        gbMath=Gb_Subject(self,MATH,'수학',(5,21),(9,20))
         self.hlMain.addWidget(gbMath)
-        gbMath.btnClear.clicked.connect(lambda: self.__clear(gbMath))
-        gbMath.btnGrade.clicked.connect(lambda: self.__get_input(MATH,gbMath))
         
-        gbEnglish=Gb_Subject(self,'영어',(5,4,45))
+        gbEnglish=Gb_Subject(self,ENGLISH,'영어',(5,4,45))
         self.hlMain.addWidget(gbEnglish)
-        gbEnglish.btnClear.clicked.connect(lambda: self.__clear(gbEnglish))
-        gbEnglish.btnGrade.clicked.connect(lambda: self.__get_input(ENGLISH,gbEnglish))
         
-        gbHistory=Gb_Subject(self,'한국사',(4,20))
+        gbHistory=Gb_Subject(self,HISTORY,'한국사',(4,20))
         self.hlMain.addWidget(gbHistory)
-        gbHistory.btnClear.clicked.connect(lambda: self.__clear(gbHistory))
-        gbHistory.btnGrade.clicked.connect(lambda: self.__get_input(HISTORY,gbHistory))
         
-        gbSearch1=Gb_Subject(self,SEARCH_1_NAME,(4,20))
+        gbSearch1=Gb_Subject(self,SEARCH_1,SEARCH_1_NAME,(4,20))
         self.hlMain.addWidget(gbSearch1)
-        gbSearch1.btnClear.clicked.connect(lambda: self.__clear(gbSearch1))
-        gbSearch1.btnGrade.clicked.connect(lambda: self.__get_input(SEARCH_1,gbSearch1))
         
-        gbSearch2=Gb_Subject(self,SEARCH_2_NAME,(4,20))
+        gbSearch2=Gb_Subject(self,SEARCH_2,SEARCH_2_NAME,(4,20))
         self.hlMain.addWidget(gbSearch2)
-        gbSearch2.btnClear.clicked.connect(lambda: self.__clear(gbSearch2))
-        gbSearch2.btnGrade.clicked.connect(lambda: self.__get_input(SEARCH_2,gbSearch2))
         
         self.__code_to_gb=(gbKorean,gbMath,gbEnglish,gbHistory,gbSearch1,gbSearch2)
         
@@ -231,122 +340,6 @@ class Main(QMainWindow,UI_Main):
         '''
         
         self.__saved=True
-    
-    def __clear(self,gb_subject):
-        for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
-            lnAns.setText('')
-            lnCor.setText('')
-        
-    def __get_input(self,subject_code,gb_subject):
-        def show_err(detail_text):
-            err_win=DetailErr(
-                self,
-                'ERROR',
-                '값 입력 오류',
-                detail_text
-            )
-            err_win.exec_()
-        
-        ans=[]
-        cor=[]
-        for k,(lnAns,lnCor) in enumerate(zip(gb_subject.lnAns,gb_subject.lnCor)):
-            #응답,정답 불러오기
-            a=lnAns.text().replace(' ','')
-            b=lnCor.text().replace(' ','')
-            #응답,정답 오류검사->저장
-            if len(a)!=len(b):
-                show_err(f'입력 오류 @ 선택형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
-                return
-            if a and b:
-                a=list(a)
-                b=list(b)
-                ans+=a; cor+=b
-        
-        if hasattr(gb_subject,'lnAnsSupply'):
-            print('서답')
-            for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(gb_subject.lnAnsSupply,gb_subject.lnCorSupply)):
-                #응답,정답 불러오기
-                a=lnAnsSupply.text()
-                b=lnCorSupply.text()
-                #응답,정답 오류검사->저장
-                if len(a)!=len(b):
-                    show_err(f'입력 오류 @ 서답형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
-                    return
-                if a and b:
-                    ans.append(a)
-                    cor.append(b)
-        
-        if not (ans and cor):
-            show_err('응답/정답 미입력')
-        #elif not len(ans)==len(cor)==gb_subject.inputs_count:
-        elif not len(ans)==len(cor):
-            show_err(f'입력 오류:\n응답 길이({len(a)})\n!= 정답 길이({len(b)})\n!= 총 문항수 ({gb_subject.inputs_count})')
-        else:
-            print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
-            error_num=[]
-            
-            subject_ans=[]
-            subject_cor=[]
-            for k,(ans,cor) in enumerate(zip(ans,cor)):
-                if not ans==cor:
-                    error_num.append(k+1)
-                subject_ans.append(str(ans))
-                subject_cor.append(str(cor))
-            subject_data=(subject_ans,subject_cor)
-            
-            response=QMessageBox.question(
-                self,
-                "오답 개수 확인",
-                f"{len(error_num)}개 틀림\n채점 진행?"
-            )
-            if response==QMessageBox.Yes:
-                if not error_num:
-                    if subject_code==4 or subject_code==5:
-                        total_score=50
-                    else:
-                        total_score=100
-                    self.set_grade(subject_code,0,total_score,subject_data)
-                else:
-                    self.__score_win.append(Input_Score(self,subject_code,error_num,subject_data))
-                    self.__score_win[-1].show()
-    
-    def set_grade(self,subject_code,error_count,total_score,subject_data=None):
-        if subject_data:
-            self.__result[subject_code]=subject_data+(total_score,)
-            print(self.__result[subject_code])
-        gb_subject=self.__code_to_gb[subject_code]
-        
-        for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
-            lnAns.setEnabled(False)
-            lnCor.setEnabled(False)
-        if hasattr(gb_subject,'lnAnsSupply'):
-            for lnAnsSupply,lnCorSupply in zip(gb_subject.lnAnsSupply,gb_subject.lnCorSupply):
-                lnAnsSupply.setEnabled(False)
-                lnCorSupply.setEnabled(False)
-        
-        reconnect_signal(gb_subject.btnClear.clicked, lambda: self.__get_input(subject_code,gb_subject) )
-        reconnect_signal(gb_subject.btnGrade.clicked, lambda: self.__edit(subject_code,gb_subject)      )
-        
-        gb_subject.btnClear.setText('점수 수정')
-        gb_subject.btnGrade.setText('답안 수정')
-        gb_subject.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
-        self.__saved=False
-    
-    def __edit(self,subject_code,gb_subject):
-        for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
-            lnAns.setEnabled(True)
-            lnCor.setEnabled(True)
-        if hasattr(gb_subject,'lnAnsSupply'):
-            for lnAnsSupply,lnCorSupply in zip(gb_subject.lnAnsSupply,gb_subject.lnCorSupply):
-                lnAnsSupply.setEnabled(True)
-                lnCorSupply.setEnabled(True)
-        
-        reconnect_signal(gb_subject.btnClear.clicked, lambda: self.__clear(gb_subject)                  )
-        reconnect_signal(gb_subject.btnGrade.clicked, lambda: self.__get_input(subject_code,gb_subject) )
-        
-        gb_subject.btnClear.setText('초기화')
-        gb_subject.btnGrade.setText('채점')
-        gb_subject.lbRes.setText('')
     
     def __load_as(self,file_path):
         file_path,_=QFileDialog.getOpenFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
