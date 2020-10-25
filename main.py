@@ -182,7 +182,8 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         self.set_grade(
             tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),
-            subject_score
+            subject_score,
+            (subject_ans,subject_cor)
         )
     
     def get_data(self):
@@ -310,7 +311,6 @@ class Main(QMainWindow,UI_Main):
         super().__init__()
         self.setupUi(self)
         
-        self.__result    = [None,None,None,None,None,None]
         self.__last_file = ''
         #self.__last_file = DEFAULT_FILE_NAME
         
@@ -381,8 +381,6 @@ class Main(QMainWindow,UI_Main):
         try:
             with open(file_path,'r',encoding='utf-8') as file:
                 data=json.load(file)
-            self.__result=data
-            print(self.__result)
             
             for subject_code,subject_data in enumerate(data):
                 if subject_data:
@@ -410,8 +408,12 @@ class Main(QMainWindow,UI_Main):
             self.__saved=True
     
     def __saver(self,file_path):
+        result=[]
+        for gb_subject in self.__code_to_gb:
+            result.append(gb_subject.get_data())
+        
         with open(file_path,'w',encoding='utf-8') as file:
-            json.dump(self.__result,file,indent=4,ensure_ascii=False)
+            json.dump(result,file,indent=4,ensure_ascii=False)
     
     def __opensource(self):
         if not self.__opensource_win:
