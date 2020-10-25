@@ -119,7 +119,6 @@ class Gb_Subject(QGroupBox):
             )
         
         def automatic_next(priv_wid,next_wid,k):
-            print(k,priv_wid.max_length)
             if k>=priv_wid.max_length:
                 QTimer.singleShot(0,next_wid,SLOT('setFocus()'))
         

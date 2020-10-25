@@ -25,8 +25,6 @@ CURRENT_PATH      = os.path.abspath('./')+'\\'
 PROGRAM_PATH      = os.path.dirname(os.path.abspath(sys.argv[0]))+'\\'
 #DEFAULT_FILE_NAME ='./save.mockdata'
 
-print(CURRENT_PATH,PROGRAM_PATH)
-
 
 def resize_height(window,*wid):
     app.processEvents()
@@ -191,7 +189,6 @@ class Main(QMainWindow,UI_Main):
                 elif reply==QMessageBox.Cancel:
                     self.deleteLater()
                     sys.exit(1)
-                #print(''.join(traceback.format_exception(*sys.exc_info())))
         '''
         
         self.__saved=True
@@ -242,8 +239,8 @@ class Main(QMainWindow,UI_Main):
         
         if not (ans and cor):
             show_err('응답/정답 미입력')
-        #elif not len(ans)==len(cor)==gb_subject.inputs_count:
-        elif not len(ans)==len(cor):
+        elif not len(ans)==len(cor)==gb_subject.inputs_count:
+        #elif not len(ans)==len(cor):
             show_err(f'입력 오류:\n응답 길이({len(a)})\n!= 정답 길이({len(b)})\n!= 총 문항수 ({gb_subject.inputs_count})')
         else:
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
@@ -264,8 +261,15 @@ class Main(QMainWindow,UI_Main):
                 f"{len(error_num)}개 틀림\n채점 진행?"
             )
             if response==QMessageBox.Yes:
-                self.__score_win.append(Input_Score(self,subject_code,error_num,subject_data))
-                self.__score_win[-1].show()
+                if not error_num:
+                    if subject_code==4 or subject_code==5:
+                        total_score=50
+                    else:
+                        total_score=100
+                    self.set_grade(subject_code,0,total_score,subject_data)
+                else:
+                    self.__score_win.append(Input_Score(self,subject_code,error_num,subject_data))
+                    self.__score_win[-1].show()
     
     def set_grade(self,subject_code,error_count,total_score,subject_data=None):
         if subject_data:
@@ -324,15 +328,15 @@ class Main(QMainWindow,UI_Main):
                 gb_subject=self.__code_to_gb[subject_code]
                 max_input_index=gb_subject.inputs_select
                 for k,(lnAns,lnCor) in enumerate(zip(gb_subject.lnAns,gb_subject.lnCor)):
-                    lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]).replace('0','_'))
-                    lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]).replace('0','_'))
+                    lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]))
+                    lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]))
                 if hasattr(gb_subject,'lnAnsSupply'):
                     for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(gb_subject.lnAnsSupply,gb_subject.lnCorSupply)):
                         if k>len(subject_ans)-1-max_input_index:
                             break
-                        lnAnsSupply.setText(subject_ans[max_input_index+k].replace('0','_'))
-                        lnCorSupply.setText(subject_cor[max_input_index+k].replace('0','_'))
-            self.set_grade(subject_code,tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),subject_score)
+                        lnAnsSupply.setText(subject_ans[max_input_index+k])
+                        lnCorSupply.setText(subject_cor[max_input_index+k])
+                self.set_grade(subject_code,tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),subject_score)
     
     def __save(self):
         if self.__last_file:
@@ -371,7 +375,6 @@ class Main(QMainWindow,UI_Main):
         self.__license_win.show()
     
     def closeEvent(self,event):
-        print('close')
         if self.__saved:
             event.accept()
         else:
