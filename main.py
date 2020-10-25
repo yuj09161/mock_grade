@@ -132,7 +132,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         super().__init__()
         
-        self.__subject_code=subject_code
+        self.__parent       = parent
+        self.__subject_code = subject_code
+        self.__score_win    = []
+        self.__result       = None
         
         self.inputs_select=shape[-1]
         if supply_shape:
@@ -159,8 +162,31 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 QWidget.setTabOrder(priv_wid,next_wid)
                 do_connect(priv_wid,next_wid)
         
-        gbKorean.btnClear.clicked.connect(self.__clear)
-        gbKorean.btnGrade.clicked.connect(self.__get_input)
+        self.btnClear.clicked.connect(self.__clear)
+        self.btnGrade.clicked.connect(self.__get_input)
+    
+    def load_data(self,subject_data):
+        subject_ans,subject_cor,subject_score=subject_data
+        max_input_index=self.inputs_select
+        
+        for k,(lnAns,lnCor) in enumerate(zip(self.lnAns,self.lnCor)):
+            lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]))
+            lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]))
+            
+        if hasattr(self,'lnAnsSupply'):
+            for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(self.lnAnsSupply,self.lnCorSupply)):
+                if k>len(subject_ans)-1-max_input_index:
+                    break
+                lnAnsSupply.setText(subject_ans[max_input_index+k])
+                lnCorSupply.setText(subject_cor[max_input_index+k])
+        
+        self.set_grade(
+            tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),
+            subject_score
+        )
+    
+    def get_data(self):
+        return self.__result
     
     def __clear(self):
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
@@ -230,21 +256,21 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 f"{len(error_num)}개 틀림\n채점 진행?"
             )
             if response==QMessageBox.Yes:
-                if not error_num:
-                    if self.__subject_code==4 or self.__subject_code==5:
-                        total_score=50
-                    else:
-                        total_score=100
-                    self.set_grade(self.__subject_code,0,total_score,subject_data)
+                if self.__subject_code==4 or self.__subject_code==5:
+                    max_score=50
                 else:
-                    self.__score_win.append(Input_Score(self,self.__subject_code,error_num,subject_data))
+                    max_score=100
+                
+                if not error_num:
+                    self.set_grade(0,max_score,subject_data)
+                else:
+                    self.__score_win.append(Input_Score(self,error_num,max_score,subject_data))
                     self.__score_win[-1].show()
     
     def set_grade(self,error_count,total_score,subject_data=None):
         if subject_data:
-            self.__result[subject_code]=subject_data+(total_score,)
-            print(self.__result[subject_code])
-        self=self.__code_to_gb[subject_code]
+            self.__result=subject_data+(total_score,)
+            print(self.__result)
         
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
             lnAns.setEnabled(False)
@@ -254,13 +280,13 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 lnAnsSupply.setEnabled(False)
                 lnCorSupply.setEnabled(False)
         
-        reconnect_signal(self.btnClear.clicked, lambda: self.__get_input(subject_code,self) )
-        reconnect_signal(self.btnGrade.clicked, lambda: self.__edit(subject_code,self)      )
+        reconnect_signal(self.btnClear.clicked, self.__get_input )
+        reconnect_signal(self.btnGrade.clicked, self.__edit      )
         
         self.btnClear.setText('점수 수정')
         self.btnGrade.setText('답안 수정')
         self.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
-        self.__saved=False
+        self.__parent.set_saved(False)
     
     def __edit(self):
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
@@ -271,8 +297,8 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 lnAnsSupply.setEnabled(True)
                 lnCorSupply.setEnabled(True)
         
-        reconnect_signal(self.btnClear.clicked, lambda: self.__clear(self)                  )
-        reconnect_signal(self.btnGrade.clicked, lambda: self.__get_input(subject_code,self) )
+        reconnect_signal(self.btnClear.clicked, self.__clear    )
+        reconnect_signal(self.btnGrade.clicked, self.__get_input)
         
         self.btnClear.setText('초기화')
         self.btnGrade.setText('채점')
@@ -288,7 +314,6 @@ class Main(QMainWindow,UI_Main):
         self.__last_file = ''
         #self.__last_file = DEFAULT_FILE_NAME
         
-        self.__score_win      = []
         self.__opensource_win = None
         self.__license_win    = None
         
@@ -341,6 +366,10 @@ class Main(QMainWindow,UI_Main):
         
         self.__saved=True
     
+    def set_saved(self,saved):
+        assert type(saved) is bool
+        self.__saved=saved
+    
     def __load_as(self,file_path):
         file_path,_=QFileDialog.getOpenFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
         if file_path:
@@ -349,26 +378,22 @@ class Main(QMainWindow,UI_Main):
             self.__saved=True
     
     def __loader(self,file_path):
-        with open(file_path,'r',encoding='utf-8') as file:
-            data=json.load(file)
-        self.__result=data
-        print(self.__result)
-        
-        for subject_code,subject_data in enumerate(data):
-            if subject_data:
-                subject_ans,subject_cor,subject_score=subject_data
-                gb_subject=self.__code_to_gb[subject_code]
-                max_input_index=gb_subject.inputs_select
-                for k,(lnAns,lnCor) in enumerate(zip(gb_subject.lnAns,gb_subject.lnCor)):
-                    lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]))
-                    lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]))
-                if hasattr(gb_subject,'lnAnsSupply'):
-                    for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(gb_subject.lnAnsSupply,gb_subject.lnCorSupply)):
-                        if k>len(subject_ans)-1-max_input_index:
-                            break
-                        lnAnsSupply.setText(subject_ans[max_input_index+k])
-                        lnCorSupply.setText(subject_cor[max_input_index+k])
-                self.set_grade(subject_code,tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),subject_score)
+        try:
+            with open(file_path,'r',encoding='utf-8') as file:
+                data=json.load(file)
+            self.__result=data
+            print(self.__result)
+            
+            for subject_code,subject_data in enumerate(data):
+                if subject_data:
+                    gb_subject=self.__code_to_gb[subject_code]
+                    gb_subject.load_data(subject_data)
+        except:
+            err_win=DetailErr(
+                    self, 'Error', '파일 불러오기 오류 발생',
+                    sys.exc_info()
+                )
+            err_win.exec_()
     
     def __save(self):
         if self.__last_file:
@@ -421,10 +446,10 @@ class Main(QMainWindow,UI_Main):
 
 
 class Input_Score(QMainWindow,UI_Input_Score):
-    def __init__(self,main_win,subject_code,error_num,subject_data):
-        self.__main_win     = main_win
-        self.__subject      = subject_code
+    def __init__(self,parent,error_num,total_score,subject_data):
+        self.__parent       = parent
         self.__err_num      = error_num
+        self.__score        = total_score
         self.__subject_data = subject_data
         
         super().__init__()
@@ -443,15 +468,11 @@ class Input_Score(QMainWindow,UI_Input_Score):
         try:
             response=QMessageBox.question(self,'채점 완료?','채점 완료?')
             if response==QMessageBox.Yes:
-                if self.__subject==4 or self.__subject==5:
-                    total_score=50
-                else:
-                    total_score=100
                 for lnScore in self.lnScore:
-                    total_score-=int(lnScore.text())
+                    self.__score-=int(lnScore.text())
                 
                 self.deleteLater()
-                self.__main_win.set_grade(self.__subject,len(self.__err_num),total_score,self.__subject_data)
+                self.__parent.set_grade(len(self.__err_num),self.__score,self.__subject_data)
         except ValueError:
             err_win=DetailErr(
                 self, 'Error', '타입 오류',
