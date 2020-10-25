@@ -111,52 +111,37 @@ class UI_Main(object):
     # retranslateUi
 
 
-class Gb_Subject(QGroupBox):
-    def __init__(self,parent,title,shape,supply_shape=None):
-        def do_connect(priv_wid,next_wid):
-            priv_wid.textChanged.connect(
-                lambda text: automatic_next(priv_wid,next_wid,len(text.replace(' ','').replace('_','')))
-            )
-        
-        def automatic_next(priv_wid,next_wid,k):
-            if k>=priv_wid.max_length:
-                QTimer.singleShot(0,next_wid,SLOT('setFocus()'))
-        
+class UI_Subject:
+    def setupUi(self,widget,title,shape,supply_shape=None):
         super().__init__()
+        
         row_count=len(shape)
         column_count=max(shape[:-1])
-
-        self.inputs_select=shape[-1]
-            
+        
         if supply_shape:
             sp_supply=1
-            self.inputs_count=shape[-1]+supply_shape[-1]
-            self.inputs_supply=supply_shape[-1]
         else:
             sp_supply=0
-            self.inputs_count=shape[-1]
         
-        self.setParent(parent)
-        #self.setObjectName(u"gb1")
         self.setSizePolicy(sizePolicy_PF)
         sizePolicy_PF.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
         
-        self.glMain = QGridLayout(self)
+        self.glMain = QGridLayout(widget)
         self.glMain.setObjectName(u"glGb1")
 
-        self.lbNum = QLabel(self)
+        self.lbNum = QLabel(widget)
         self.lbNum.setObjectName(u"lbNum")
         sizePolicy_FF.setHeightForWidth(self.lbNum.sizePolicy().hasHeightForWidth())
         self.lbNum.setSizePolicy(sizePolicy_FF)
         self.glMain.addWidget(self.lbNum, 0, 0, row_count, 1, Qt.AlignCenter)
 
-        self.lbAns = QLabel(self)
+        self.lbAns = QLabel(widget)
         self.lbAns.setObjectName(u"lbAns")
         sizePolicy_FF.setHeightForWidth(self.lbAns.sizePolicy().hasHeightForWidth())
         self.lbAns.setSizePolicy(sizePolicy_FF)
         self.glMain.addWidget(self.lbAns, row_count+sp_supply, 0, row_count, 1, Qt.AlignCenter)
 
-        self.lbCor = QLabel(self)
+        self.lbCor = QLabel(widget)
         self.lbCor.setObjectName(u"lbCor")
         sizePolicy_FF.setHeightForWidth(self.lbCor.sizePolicy().hasHeightForWidth())
         self.lbCor.setSizePolicy(sizePolicy_FF)
@@ -168,14 +153,14 @@ class Gb_Subject(QGroupBox):
         a=0
         for k,l in enumerate(shape[:-1]):
             for j in range(l):
-                lbTitle = QLabel(self)
+                lbTitle = QLabel(widget)
                 lbTitle.setObjectName(u"lbTitle")
                 sizePolicy_PF.setHeightForWidth(lbTitle.sizePolicy().hasHeightForWidth())
                 lbTitle.setSizePolicy(sizePolicy_PF)
                 lbTitle.setText(f'{a*5+1}~{a*5+5}')
                 self.glMain.addWidget(lbTitle, k, j+1, 1, 1, Qt.AlignCenter)
 
-                lnAns = QLineEdit(self)
+                lnAns = QLineEdit(widget)
                 lnAns.setObjectName(u"lnAns")
                 sizePolicy_FF.setHeightForWidth(lnAns.sizePolicy().hasHeightForWidth())
                 lnAns.setSizePolicy(sizePolicy_FF)
@@ -188,7 +173,7 @@ class Gb_Subject(QGroupBox):
                 lnAns.max_length=5
                 self.lnAns.append(lnAns)
                 
-                lnCor = QLineEdit(self)
+                lnCor = QLineEdit(widget)
                 lnCor.setObjectName(u"lnCor")
                 sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
                 lnCor.setSizePolicy(sizePolicy_FF)
@@ -225,31 +210,31 @@ class Gb_Subject(QGroupBox):
             Validator_Ans_Supply=QRegExpValidator(QRegExp(r'[1-9][0-9]{,2}|0'))
             Validator_Cor_Supply=QRegExpValidator(QRegExp(r'[1-9][0-9]{,2}|0'))
             
-            self.widTitleSupply=QWidget(self)
+            self.widTitleSupply=QWidget(widget)
             self.glTitleSupply=QGridLayout(self.widTitleSupply)
             self.glTitleSupply.setContentsMargins(0,0,0,0)
             self.glMain.addWidget(self.widTitleSupply,(row_count+sp_supply)*1-1,1,1,column_count)
             
-            self.widAnsSupply=QWidget(self)
+            self.widAnsSupply=QWidget(widget)
             self.glAnsSupply=QGridLayout(self.widAnsSupply)
             self.glAnsSupply.setContentsMargins(0,0,0,0)
             self.glMain.addWidget(self.widAnsSupply,(row_count+sp_supply)*2-1,1,1,column_count)
             
-            self.widCorSupply=QWidget(self)
+            self.widCorSupply=QWidget(widget)
             self.glCorSupply=QGridLayout(self.widCorSupply)
             self.glCorSupply.setContentsMargins(0,0,0,0)
             self.glMain.addWidget(self.widCorSupply,(row_count+sp_supply)*3-1,1,1,column_count)
             
             for k,l in enumerate(supply_shape[:-1]):
                 for j in range(l):
-                    lbTitle = QLabel(self.widAnsSupply)
+                    lbTitle = QLabel(self.widTitleSupply)
                     lbTitle.setObjectName(u"lbTitle")
                     sizePolicy_PF.setHeightForWidth(lbTitle.sizePolicy().hasHeightForWidth())
                     lbTitle.setSizePolicy(sizePolicy_PF)
                     lbTitle.setText(str(self.inputs_select+k*len(supply_shape)+j+1))
                     self.glTitleSupply.addWidget(lbTitle, k, j, 1, 1, Qt.AlignCenter)
 
-                    lnAns = QLineEdit(self)
+                    lnAns = QLineEdit(self.widAnsSupply)
                     lnAns.setObjectName(u"lnAnsSupply")
                     sizePolicy_FF.setHeightForWidth(lnAns.sizePolicy().hasHeightForWidth())
                     lnAns.setSizePolicy(sizePolicy_FF)
@@ -272,21 +257,6 @@ class Gb_Subject(QGroupBox):
                     
                     lnCor.max_length=3
                     self.lnCorSupply.append(lnCor)
-            
-            for priv_wid,next_wid in zip(
-                self.lnAns    +self.lnAnsSupply+self.lnCor+self.lnCorSupply[:-1],
-                self.lnAns[1:]+self.lnAnsSupply+self.lnCor+self.lnCorSupply    
-            ):
-                QWidget.setTabOrder(priv_wid,next_wid)
-                do_connect(priv_wid,next_wid)
-        
-        else:
-            for priv_wid,next_wid in zip(
-                self.lnAns    +self.lnCor[:-1],
-                self.lnAns[1:]+self.lnCor    
-            ):
-                QWidget.setTabOrder(priv_wid,next_wid)
-                do_connect(priv_wid,next_wid)
         
         self.widBot = QWidget(self)
         self.widBot.setObjectName(u"widBot")
@@ -325,7 +295,7 @@ class Gb_Subject(QGroupBox):
 
 
 class UI_Input_Score(object):
-    def setupUI(self, Input_Score, err_nums):
+    def setupUi(self, Input_Score, err_nums):
         if not Input_Score.objectName():
             Input_Score.setObjectName(u"Input_Score")
         Input_Score.resize(215, 103)
@@ -390,7 +360,7 @@ class UI_Input_Score(object):
         self.retranslateUi(Input_Score)
 
         QMetaObject.connectSlotsByName(Input_Score)
-    # setupUI
+    # setupUi
 
     def retranslateUi(self, Input_Score):
         Input_Score.setWindowTitle(QCoreApplication.translate("Input_Score", u"\uc120\ud0dd\ud615 \ubc30\uc810", None))

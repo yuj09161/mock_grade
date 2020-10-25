@@ -2,7 +2,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
-from UI import UI_Main,Gb_Subject,UI_Input_Score
+from UI import UI_Main,UI_Subject,UI_Input_Score
 
 import os,sys,re,json,traceback
 import random
@@ -75,7 +75,7 @@ class Info(QMainWindow):
         self.__display_qtinfo=display_qtinfo
         
         super().__init__(parent)
-        self.setupUI()
+        self.setupUi()
         
         self.retranslateUi(title,info_text)
         self.btnExit.clicked.connect(self.hide)
@@ -83,7 +83,7 @@ class Info(QMainWindow):
         if self.__display_qtinfo:
             self.btnQt.clicked.connect(lambda: QMessageBox.aboutQt(self))
     
-    def setupUI(self):
+    def setupUi(self):
         if not self.objectName():
             self.setObjectName(u"info")
         self.setFixedSize(400, 300)
@@ -117,6 +117,45 @@ class Info(QMainWindow):
         self.btnExit.setText(QCoreApplication.translate("info", u"\ub2eb\uae30", None))
         if self.__display_qtinfo:
             self.btnQt.setText(QCoreApplication.translate("info", u"About Qt", None))
+
+
+class Gb_Subject(QGroupBox,UI_Subject):
+    def __init__(self,parent,title,shape,supply_shape=None):
+        def do_connect(priv_wid,next_wid):
+            priv_wid.textChanged.connect(
+                lambda text: automatic_next(priv_wid,next_wid,len(text.replace(' ','').replace('_','')))
+            )
+        
+        def automatic_next(priv_wid,next_wid,k):
+            if k>=priv_wid.max_length:
+                QTimer.singleShot(0,next_wid,SLOT('setFocus()'))
+        
+        super().__init__()
+        
+        self.inputs_select=shape[-1]
+        if supply_shape:
+            self.inputs_count=shape[-1]+supply_shape[-1]
+            self.inputs_supply=supply_shape[-1]
+        else:
+            self.inputs_count=shape[-1]
+        
+        self.setupUi(self,title,shape,supply_shape)
+        self.setParent(parent)
+        
+        if supply_shape:
+            for priv_wid,next_wid in zip(
+                self.lnAns    +self.lnAnsSupply+self.lnCor+self.lnCorSupply[:-1],
+                self.lnAns[1:]+self.lnAnsSupply+self.lnCor+self.lnCorSupply    
+            ):
+                QWidget.setTabOrder(priv_wid,next_wid)
+                do_connect(priv_wid,next_wid)
+        else:
+            for priv_wid,next_wid in zip(
+                self.lnAns    +self.lnCor[:-1],
+                self.lnAns[1:]+self.lnCor    
+            ):
+                QWidget.setTabOrder(priv_wid,next_wid)
+                do_connect(priv_wid,next_wid)
 
 
 class Main(QMainWindow,UI_Main):
@@ -239,8 +278,8 @@ class Main(QMainWindow,UI_Main):
         
         if not (ans and cor):
             show_err('응답/정답 미입력')
-        elif not len(ans)==len(cor)==gb_subject.inputs_count:
-        #elif not len(ans)==len(cor):
+        #elif not len(ans)==len(cor)==gb_subject.inputs_count:
+        elif not len(ans)==len(cor):
             show_err(f'입력 오류:\n응답 길이({len(a)})\n!= 정답 길이({len(b)})\n!= 총 문항수 ({gb_subject.inputs_count})')
         else:
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
@@ -396,7 +435,7 @@ class Input_Score(QMainWindow,UI_Input_Score):
         self.__subject_data = subject_data
         
         super().__init__()
-        self.setupUI(self,self.__err_num)
+        self.setupUi(self,self.__err_num)
         resize_height(self,self.centralwidget,self.widCent)
         
         self.btnCancel.clicked.connect(self.__cancel)
