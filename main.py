@@ -227,10 +227,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 #응답,정답 불러오기
                 a=lnAnsSupply.text()
                 b=lnCorSupply.text()
-                #응답,정답 오류검사->저장
-                if len(a)!=len(b):
-                    show_err(f'입력 오류 @ 서답형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
-                    return
+                #응답,정답 저장
                 if a and b:
                     ans.append(a)
                     cor.append(b)
