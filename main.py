@@ -224,7 +224,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         if self.inputs_supply:
             print('서답')
-            for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(self.lnAnsSupply,self.lnCorSupply)):
+            for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
                 #응답,정답 불러오기
                 a=lnAnsSupply.text()
                 b=lnCorSupply.text()
@@ -246,7 +246,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
             subject_cor=[]
             for k,(ans,cor) in enumerate(zip(ans,cor)):
                 if not ans==cor:
-                    error_num.append(k+1)
+                    error_num.append(str(k+1))
                 subject_ans.append(str(ans))
                 subject_cor.append(str(cor))
             subject_data=(subject_ans,subject_cor)
@@ -464,7 +464,7 @@ class Input_Score(QMainWindow,UI_Input_Score):
         self.__subject_data = subject_data
         
         super().__init__()
-        self.setupUi(self,self.__err_num)
+        self.setupUi(self,error_num)
         resize_height(self,self.centralwidget,self.widCent)
         
         for priv_wid,next_wid in zip(self.lnScore[:-1],self.lnScore[1:]):

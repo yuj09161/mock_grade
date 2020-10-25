@@ -325,7 +325,7 @@ class UI_Input_Score(object):
             lbNo = QLabel(self.widCent)
             lbNo.setObjectName(u"lbNo")
             lbNo.setAlignment(Qt.AlignCenter)
-            lbNo.setText(QCoreApplication.translate("Input_Score", str(err_num), None))
+            lbNo.setText(QCoreApplication.translate("Input_Score", err_num, None))
             self.glCent.addWidget(lbNo, k+1, 0, 1, 1)
             
             lnScore = QLineEdit(self.widCent)
