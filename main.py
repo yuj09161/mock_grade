@@ -4,7 +4,7 @@ from PySide2.QtWidgets import *
 
 from UI import UI_Main,Gb_Subject,UI_Input_Score
 
-import sys,json,traceback
+import os,sys,re,json,traceback
 import random
 
 
@@ -20,7 +20,12 @@ SEARCH_2 = 5
 SEARCH_1_NAME='물리학 I'
 SEARCH_2_NAME='지구과학 I'
 
-DEFAULT_FILE_NAME='./save.mockdata'
+NL                = '\n'
+CURRENT_PATH      = os.path.abspath('./')+'\\'
+PROGRAM_PATH      = os.path.dirname(os.path.abspath(sys.argv[0]))+'\\'
+#DEFAULT_FILE_NAME ='./save.mockdata'
+
+print(CURRENT_PATH,PROGRAM_PATH)
 
 
 def resize_height(window,*wid):
@@ -40,12 +45,13 @@ def reconnect_signal(signal,new_callable):
 
 
 class DetailErr(QMessageBox):
-    def __init__(self,parent,title,text,detail_text,icon=QMessageBox.Warning):
+    def __init__(self,parent,title,text,detail_text,*,icon=QMessageBox.Warning,buttons=QMessageBox.Ok):
         super().__init__(parent)
         
         self.setWindowTitle(title)
         self.setText(text)
         self.setIcon(icon)
+        self.setStandardButtons(buttons)
         
         if type(detail_text) is str:
             self.setDetailedText(detail_text)
@@ -57,11 +63,13 @@ class DetailErr(QMessageBox):
                     self, 'Error', '타입 오류',
                     f'detail_text 타입 오류: {type(detail_text)}'
                 )
+                err_win.exec_()
         else:
             err_win=DetailErr(
                 self, 'Error', '타입 오류',
                 f'detail_text 타입 오류: {type(detail_text)}'
             )
+            err_win.exec_()
 
 
 class Info(QMainWindow):
@@ -119,8 +127,12 @@ class Main(QMainWindow,UI_Main):
         self.setupUi(self)
         
         self.__result    = [None,None,None,None,None,None]
-        self.__score_win = []
-        self.__last_file = DEFAULT_FILE_NAME
+        self.__last_file = ''
+        #self.__last_file = DEFAULT_FILE_NAME
+        
+        self.__score_win      = []
+        self.__opensource_win = None
+        self.__license_win    = None
         
         gbKorean=Gb_Subject(self,'국어',(5,4,45))
         self.hlMain.addWidget(gbKorean)
@@ -157,11 +169,30 @@ class Main(QMainWindow,UI_Main):
         self.acLoad.triggered.connect(self.__load_as)
         self.acSave.triggered.connect(self.__save)
         self.acSaveAs.triggered.connect(self.__save_as)
+        self.acExit.triggered.connect(self.close)
         
-        try:
-            self.__loader(DEFAULT_FILE_NAME)
-        except:
-            print(''.join(traceback.format_exception(*sys.exc_info())))
+        self.acOpenLicense.triggered.connect(self.__opensource)
+        self.acLicense.triggered.connect(self.__license)
+        
+        '''
+        while True:
+            try:
+                self.__loader(DEFAULT_FILE_NAME)
+                break
+            except:
+                err_win=DetailErr(
+                        self, 'Error', '파일 형식 오류',
+                        sys.exc_info(),
+                        buttons=QMessageBox.Retry|QMessageBox.Ignore|QMessageBox.Cancel
+                    )
+                reply=err_win.exec_()
+                if reply==QMessageBox.Ignore:
+                    break
+                elif reply==QMessageBox.Cancel:
+                    self.deleteLater()
+                    sys.exit(1)
+                #print(''.join(traceback.format_exception(*sys.exc_info())))
+        '''
         
         self.__saved=True
     
@@ -172,13 +203,13 @@ class Main(QMainWindow,UI_Main):
         
     def __get_input(self,subject_code,gb_subject):
         def show_err(detail_text):
-            msgbox=DetailErr(
+            err_win=DetailErr(
                 self,
                 'ERROR',
                 '값 입력 오류',
                 detail_text
             )
-            msgbox.exec_()
+            err_win.exec_()
         
         ans=[]
         cor=[]
@@ -205,11 +236,9 @@ class Main(QMainWindow,UI_Main):
                 if len(a)!=len(b):
                     show_err(f'입력 오류 @ 서답형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
                     return
-                print(k,'/',a,b)
                 if a and b:
                     ans.append(a)
                     cor.append(b)
-                    print(ans,cor)
         
         if not (ans and cor):
             show_err('응답/정답 미입력')
@@ -239,10 +268,9 @@ class Main(QMainWindow,UI_Main):
                 self.__score_win[-1].show()
     
     def set_grade(self,subject_code,error_count,total_score,subject_data=None):
-        print(self.__result)
-        
         if subject_data:
             self.__result[subject_code]=subject_data+(total_score,)
+            print(self.__result[subject_code])
         gb_subject=self.__code_to_gb[subject_code]
         
         for lnAns,lnCor in zip(gb_subject.lnAns,gb_subject.lnCor):
@@ -287,8 +315,8 @@ class Main(QMainWindow,UI_Main):
     def __loader(self,file_path):
         with open(file_path,'r',encoding='utf-8') as file:
             data=json.load(file)
-        data=self.__test_data_gen()
         self.__result=data
+        print(self.__result)
         
         for subject_code,subject_data in enumerate(data):
             if subject_data:
@@ -299,7 +327,6 @@ class Main(QMainWindow,UI_Main):
                     lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]).replace('0','_'))
                     lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]).replace('0','_'))
                 if hasattr(gb_subject,'lnAnsSupply'):
-                    print(max_input_index)
                     for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(gb_subject.lnAnsSupply,gb_subject.lnCorSupply)):
                         if k>len(subject_ans)-1-max_input_index:
                             break
@@ -307,30 +334,44 @@ class Main(QMainWindow,UI_Main):
                         lnCorSupply.setText(subject_cor[max_input_index+k].replace('0','_'))
             self.set_grade(subject_code,tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),subject_score)
     
-    def __test_data_gen(self):
-        return tuple(
-            (tuple(str(random.randint(1,5)) for _ in range(100)),\
-            tuple(str(random.randint(1,5)) for _ in range(100)),\
-            (random.randint(1,100))) \
-            for x in range(6)
-        )
-    
     def __save(self):
-        self.__saver(self.__last_file)
-        self.__saved=True
+        if self.__last_file:
+            self.__saver(self.__last_file)
+            self.__saved=True
+        else:
+            self.__save_as()
     
     def __save_as(self):
         file_path,_=QFileDialog.getSaveFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
         if file_path:
-            self.__last_file=file_path
             self.__saver(file_path)
+            self.__last_file=file_path
             self.__saved=True
     
     def __saver(self,file_path):
         with open(file_path,'w',encoding='utf-8') as file:
             json.dump(self.__result,file,indent=4,ensure_ascii=False)
     
+    def __opensource(self):
+        if not self.__opensource_win:
+            if os.path.isfile(PROGRAM_PATH+'NOTICE'):
+                with open(PROGRAM_PATH+'NOTICE','r',encoding='utf-8') as file:
+                    self.__opensource_win=Info(self,'오픈 소스 라이선스',file.read(),True)
+            else:
+                self.__opensource_win=Info(self,'오픈 소스 라이선스','Notice File is Missed',True)
+        self.__opensource_win.show()
+    
+    def __license(self):
+        if not self.__license_win:
+            if os.path.isfile(PROGRAM_PATH+'LICENSE'):
+                with open(PROGRAM_PATH+'LICENSE','r',encoding='utf-8') as file:
+                    self.__license_win=Info(self,'정보',file.read())
+            else:
+                self.__license_win=Info(self,'정보','License File is Missed')
+        self.__license_win.show()
+    
     def closeEvent(self,event):
+        print('close')
         if self.__saved:
             event.accept()
         else:
@@ -381,6 +422,7 @@ class Input_Score(QMainWindow,UI_Input_Score):
                 self, 'Error', '타입 오류',
                 sys.exc_info(),
             )
+            err_win.exec_()
 
 
 if __name__=='__main__':

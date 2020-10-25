@@ -40,11 +40,11 @@ class UI_Main(object):
         self.acOpenLicense = QAction(Main)
         self.acOpenLicense.setObjectName(u"acOpenLicense")
         
-        self.acInfo = QAction(Main)
-        self.acInfo.setObjectName(u"acInfo")
-        
         self.acLicense = QAction(Main)
         self.acLicense.setObjectName(u"acLicense")
+        
+        self.acInfo = QAction(Main)
+        self.acInfo.setObjectName(u"acInfo")
         
         #Central Widget&Scroll Area
         self.centralwidget = QWidget(Main)
@@ -113,11 +113,20 @@ class UI_Main(object):
 
 class Gb_Subject(QGroupBox):
     def __init__(self,parent,title,shape,supply_shape=None):
+        def do_connect(priv_wid,next_wid):
+            priv_wid.textChanged.connect(
+                lambda text: automatic_next(priv_wid,next_wid,len(text.replace(' ','').replace('_','')))
+            )
+        
+        def automatic_next(priv_wid,next_wid,k):
+            print(k,priv_wid.max_length)
+            if k>=priv_wid.max_length:
+                QTimer.singleShot(0,next_wid,SLOT('setFocus()'))
+        
         super().__init__()
         row_count=len(shape)
         column_count=max(shape[:-1])
 
-        end_num=shape[-1]
         self.inputs_select=shape[-1]
             
         if supply_shape:
@@ -159,7 +168,6 @@ class Gb_Subject(QGroupBox):
         
         a=0
         for k,l in enumerate(shape[:-1]):
-            tmpAns=[]
             for j in range(l):
                 lbTitle = QLabel(self)
                 lbTitle.setObjectName(u"lbTitle")
@@ -178,12 +186,9 @@ class Gb_Subject(QGroupBox):
                 lnAns.setAlignment(Qt.AlignHCenter)
                 self.glMain.addWidget(lnAns, k+(row_count+sp_supply), j+1, 1, 1, Qt.AlignCenter)
                 
+                lnAns.max_length=5
                 self.lnAns.append(lnAns)
-                a+=1
-        
-        for k,l in enumerate(shape[:-1]):
-            tmpCor=[]
-            for j in range(l):
+                
                 lnCor = QLineEdit(self)
                 lnCor.setObjectName(u"lnCor")
                 sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
@@ -194,18 +199,25 @@ class Gb_Subject(QGroupBox):
                 lnCor.setAlignment(Qt.AlignHCenter)
                 self.glMain.addWidget(lnCor, k+(row_count+sp_supply)*2, j+1, 1, 1, Qt.AlignCenter)
                 
+                lnCor.max_length=5
                 self.lnCor.append(lnCor)
+                
+                a+=1
         
-        if a*5-4==end_num:
-            lbTitle.setText(str(end_num))
+        if a*5-4==self.inputs_select:
+            lbTitle.setText(str(self.inputs_select))
         else:
-            lbTitle.setText(f'{a*5-4}~{end_num}')
+            lbTitle.setText(f'{a*5-4}~{self.inputs_select}')
         
-        last_ans_cnt=end_num-a*5+4
-        lnAns.setValidator(QRegExpValidator(QRegExp(r'[0-5] '*last_ans_cnt+r'[0-5]')))
-        lnAns.setInputMask('9 '*last_ans_cnt+'9;_')
-        lnCor.setValidator(QRegExpValidator(QRegExp(r'[1-5] '*last_ans_cnt+r'[1-5]')))
-        lnCor.setInputMask('d '*last_ans_cnt+'d;_')
+        last_ans_cnt=self.inputs_select-a*5+5
+        
+        lnAns.setValidator(QRegExpValidator(QRegExp(r'[0-5_] '*(last_ans_cnt-1)+r'[0-5_]')))
+        lnAns.setInputMask('9 '*(last_ans_cnt-1)+'9;_')
+        lnAns.max_length=last_ans_cnt
+        
+        lnCor.setValidator(QRegExpValidator(QRegExp(r'[1-5_] '*(last_ans_cnt-1)+r'[1-5_]')))
+        lnCor.setInputMask('d '*(last_ans_cnt-1)+'d;_')
+        lnCor.max_length=last_ans_cnt
         
         if supply_shape:
             self.lnAnsSupply=[]
@@ -235,11 +247,11 @@ class Gb_Subject(QGroupBox):
                     lbTitle.setObjectName(u"lbTitle")
                     sizePolicy_PF.setHeightForWidth(lbTitle.sizePolicy().hasHeightForWidth())
                     lbTitle.setSizePolicy(sizePolicy_PF)
-                    lbTitle.setText(str(end_num+k*len(supply_shape)+j+1))
+                    lbTitle.setText(str(self.inputs_select+k*len(supply_shape)+j+1))
                     self.glTitleSupply.addWidget(lbTitle, k, j, 1, 1, Qt.AlignCenter)
 
                     lnAns = QLineEdit(self)
-                    lnAns.setObjectName(u"lnAns")
+                    lnAns.setObjectName(u"lnAnsSupply")
                     sizePolicy_FF.setHeightForWidth(lnAns.sizePolicy().hasHeightForWidth())
                     lnAns.setSizePolicy(sizePolicy_FF)
                     lnAns.setMaximumSize(QSize(50, 16777215))
@@ -247,12 +259,11 @@ class Gb_Subject(QGroupBox):
                     lnAns.setAlignment(Qt.AlignHCenter)
                     self.glAnsSupply.addWidget(lnAns, k, j, 1, 1, Qt.AlignCenter)
                     
+                    lnAns.max_length=3
                     self.lnAnsSupply.append(lnAns)
-            
-            for k,l in enumerate(supply_shape[:-1]):
-                for j in range(l):
+                    
                     lnCor = QLineEdit(self.widCorSupply)
-                    lnCor.setObjectName(u"lnCor")
+                    lnCor.setObjectName(u"lnCorSupply")
                     sizePolicy_FF.setHeightForWidth(lnCor.sizePolicy().hasHeightForWidth())
                     lnCor.setSizePolicy(sizePolicy_FF)
                     lnCor.setMaximumSize(QSize(50, 16777215))
@@ -260,7 +271,23 @@ class Gb_Subject(QGroupBox):
                     lnCor.setAlignment(Qt.AlignHCenter)
                     self.glCorSupply.addWidget(lnCor, k, j, 1, 1, Qt.AlignCenter)
                     
+                    lnCor.max_length=3
                     self.lnCorSupply.append(lnCor)
+            
+            for priv_wid,next_wid in zip(
+                self.lnAns    +self.lnAnsSupply+self.lnCor+self.lnCorSupply[:-1],
+                self.lnAns[1:]+self.lnAnsSupply+self.lnCor+self.lnCorSupply    
+            ):
+                QWidget.setTabOrder(priv_wid,next_wid)
+                do_connect(priv_wid,next_wid)
+        
+        else:
+            for priv_wid,next_wid in zip(
+                self.lnAns    +self.lnCor[:-1],
+                self.lnAns[1:]+self.lnCor    
+            ):
+                QWidget.setTabOrder(priv_wid,next_wid)
+                do_connect(priv_wid,next_wid)
         
         self.widBot = QWidget(self)
         self.widBot.setObjectName(u"widBot")
