@@ -134,15 +134,16 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         self.__parent       = parent
         self.__subject_code = subject_code
-        self.__score_win    = []
+        self.__score_win    = None
         self.__result       = None
         
         self.inputs_select=shape[-1]
         if supply_shape:
-            self.inputs_count=shape[-1]+supply_shape[-1]
-            self.inputs_supply=supply_shape[-1]
+            self.inputs_count  = shape[-1]+supply_shape[-1]
+            self.inputs_supply = supply_shape[-1]
         else:
-            self.inputs_count=shape[-1]
+            self.inputs_count  = shape[-1]
+            self.inputs_supply = None
         
         self.setupUi(self,title,shape,supply_shape)
         self.setParent(parent)
@@ -173,7 +174,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
             lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]))
             lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]))
             
-        if hasattr(self,'lnAnsSupply'):
+        if self.inputs_supply:
             for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(self.lnAnsSupply,self.lnCorSupply)):
                 if k>len(subject_ans)-1-max_input_index:
                     break
@@ -221,7 +222,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 b=list(b)
                 ans+=a; cor+=b
         
-        if hasattr(self,'lnAnsSupply'):
+        if self.inputs_supply:
             print('서답')
             for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(self.lnAnsSupply,self.lnCorSupply)):
                 #응답,정답 불러오기
@@ -234,8 +235,8 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         if not (ans and cor):
             show_err('응답/정답 미입력')
-        #elif not len(ans)==len(cor)==self.inputs_count:
-        elif not len(ans)==len(cor):
+        elif not len(ans)==len(cor)==self.inputs_count:
+        #elif not len(ans)==len(cor):
             show_err(f'입력 오류:\n응답 길이({len(a)})\n!= 정답 길이({len(b)})\n!= 총 문항수 ({self.inputs_count})')
         else:
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
@@ -264,8 +265,8 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 if not error_num:
                     self.set_grade(0,max_score,subject_data)
                 else:
-                    self.__score_win.append(Input_Score(self,error_num,max_score,subject_data))
-                    self.__score_win[-1].show()
+                    self.__score_win=Input_Score(self,error_num,max_score,subject_data)
+                    self.__score_win.show()
     
     def set_grade(self,error_count,total_score,subject_data=None):
         if subject_data:
@@ -275,7 +276,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
             lnAns.setEnabled(False)
             lnCor.setEnabled(False)
-        if hasattr(self,'lnAnsSupply'):
+        if self.inputs_supply:
             for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
                 lnAnsSupply.setEnabled(False)
                 lnCorSupply.setEnabled(False)
@@ -292,7 +293,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
             lnAns.setEnabled(True)
             lnCor.setEnabled(True)
-        if hasattr(self,'lnAnsSupply'):
+        if self.inputs_supply:
             for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
                 lnAnsSupply.setEnabled(True)
                 lnCorSupply.setEnabled(True)
@@ -316,22 +317,22 @@ class Main(QMainWindow,UI_Main):
         self.__opensource_win = None
         self.__license_win    = None
         
-        gbKorean=Gb_Subject(self,KOREAN,'국어',(5,4,45))
+        gbKorean  = Gb_Subject(self,KOREAN  ,'국어'       ,(5,4,45))
         self.hlMain.addWidget(gbKorean)
         
-        gbMath=Gb_Subject(self,MATH,'수학',(5,21),(9,20))
+        gbMath    = Gb_Subject(self,MATH    ,'수학'       ,(5,21)  ,(9,20))
         self.hlMain.addWidget(gbMath)
         
-        gbEnglish=Gb_Subject(self,ENGLISH,'영어',(5,4,45))
+        gbEnglish = Gb_Subject(self,ENGLISH ,'영어'       ,(5,4,45))
         self.hlMain.addWidget(gbEnglish)
         
-        gbHistory=Gb_Subject(self,HISTORY,'한국사',(4,20))
+        gbHistory = Gb_Subject(self,HISTORY ,'한국사'     ,(4,20)  )
         self.hlMain.addWidget(gbHistory)
         
-        gbSearch1=Gb_Subject(self,SEARCH_1,SEARCH_1_NAME,(4,20))
+        gbSearch1 = Gb_Subject(self,SEARCH_1,SEARCH_1_NAME,(4,20)  )
         self.hlMain.addWidget(gbSearch1)
         
-        gbSearch2=Gb_Subject(self,SEARCH_2,SEARCH_2_NAME,(4,20))
+        gbSearch2 = Gb_Subject(self,SEARCH_2,SEARCH_2_NAME,(4,20)  )
         self.hlMain.addWidget(gbSearch2)
         
         self.__code_to_gb=(gbKorean,gbMath,gbEnglish,gbHistory,gbSearch1,gbSearch2)
@@ -501,4 +502,3 @@ if __name__=='__main__':
     main.show()
     
     sys.exit(app.exec_())
-self.__
