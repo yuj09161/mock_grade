@@ -447,6 +447,15 @@ class Main(QMainWindow,UI_Main):
 
 class Input_Score(QMainWindow,UI_Input_Score):
     def __init__(self,parent,error_num,total_score,subject_data):
+        def do_connect(priv_wid,next_wid):
+            priv_wid.textChanged.connect(
+                lambda text: automatic_next(priv_wid,next_wid,len(text.replace(' ','').replace('_','')))
+            )
+        
+        def automatic_next(priv_wid,next_wid,k):
+            if k:
+                QTimer.singleShot(0,next_wid,SLOT('setFocus()'))
+        
         self.__parent       = parent
         self.__err_num      = error_num
         self.__score        = total_score
@@ -455,6 +464,9 @@ class Input_Score(QMainWindow,UI_Input_Score):
         super().__init__()
         self.setupUi(self,self.__err_num)
         resize_height(self,self.centralwidget,self.widCent)
+        
+        for priv_wid,next_wid in zip(self.lnScore[:-1],self.lnScore[1:]):
+            do_connect(priv_wid,next_wid)
         
         self.btnCancel.clicked.connect(self.__cancel)
         self.btnNext.clicked.connect(self.__grading)
