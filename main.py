@@ -192,7 +192,9 @@ class Gb_Subject(QGroupBox,UI_Subject):
     def __clear(self):
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
             lnAns.setText('')
+            lnAns.setCursorPosition(0)
             lnCor.setText('')
+            lnCor.setCursorPosition(0)
     
     def __get_input(self):
         def show_err(detail_text):
