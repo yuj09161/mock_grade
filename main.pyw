@@ -214,18 +214,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
             #응답,정답 불러오기
             a=lnAns.text().replace(' ','')
             b=lnCor.text().replace(' ','')
-            #응답,정답 오류검사->저장
-            if len(a)!=len(b):
-                err_win=DetailErr(
-                    self, 'ERROR', '값 입력 오류',
-                    f'입력 오류 @ 선택형, {k}:\n응답 수({len(a)}) != 정답 수({len(b)})'
-                )
-                err_win.exec_()
-                return
-            if a and b:
-                a=list(a)
-                b=list(b)
-                ans+=a; cor+=b
+            #응답,정답 저장
+            a=list(a)
+            b=list(b)
+            ans+=a; cor+=b
         
         if self.inputs_supply:
             print('서답')
@@ -238,6 +230,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
                     ans.append(a)
                     cor.append(b)
         
+        print(ans,cor)
         self.__result=(ans,cor,-1)
         
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
