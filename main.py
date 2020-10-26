@@ -139,6 +139,14 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         self.inputs_select=shape[-1]
         if supply_shape:
+            if not sum(supply_shape[:-1])==supply_shape[-1]:
+                err_win=DetailErr(
+                        self, 'Error', '서답형 개수 오류',
+                        f"{sum(supply_shape[:-1])}!={supply_shape[-1]}"
+                    )
+                err_win.exec_()
+                sys.exit(1)
+            
             self.inputs_count  = shape[-1]+supply_shape[-1]
             self.inputs_supply = supply_shape[-1]
         else:
@@ -215,7 +223,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
             b=lnCor.text().replace(' ','')
             #응답,정답 오류검사->저장
             if len(a)!=len(b):
-                show_err(f'입력 오류 @ 선택형, {k}:\n응답 길이({len(a)}) != 정답 길이({len(b)})')
+                show_err(f'입력 오류 @ 선택형, {k}:\n응답 수({len(a)}) != 정답 수({len(b)})')
                 return
             if a and b:
                 a=list(a)
@@ -237,7 +245,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
             show_err('응답/정답 미입력')
         elif not len(ans)==len(cor)==self.inputs_count:
         #elif not len(ans)==len(cor):
-            show_err(f'입력 오류:\n응답 길이({len(a)})\n!= 정답 길이({len(b)})\n!= 총 문항수 ({self.inputs_count})')
+            show_err(f'입력 오류:\n응답 수({len(ans)})\n!= 정답 수({len(cor)})\n!= 총 문항수 ({self.inputs_count})')
         else:
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
             error_num=[]
@@ -257,7 +265,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 f"{len(error_num)}개 틀림\n채점 진행?"
             )
             if response==QMessageBox.Yes:
-                if self.__subject_code==4 or self.__subject_code==5:
+                if self.__subject_code in (HISTORY,SEARCH_1,SEARCH_2):
                     max_score=50
                 else:
                     max_score=100
@@ -320,7 +328,7 @@ class Main(QMainWindow,UI_Main):
         gbKorean  = Gb_Subject(self,KOREAN  ,'국어'       ,(5,4,45))
         self.hlMain.addWidget(gbKorean)
         
-        gbMath    = Gb_Subject(self,MATH    ,'수학'       ,(5,21)  ,(9,20))
+        gbMath    = Gb_Subject(self,MATH    ,'수학'       ,(5,21)  ,(9,9))
         self.hlMain.addWidget(gbMath)
         
         gbEnglish = Gb_Subject(self,ENGLISH ,'영어'       ,(5,4,45))
