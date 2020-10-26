@@ -277,6 +277,10 @@ class UI_Subject:
 
         self.hlBot.addItem(spH)
 
+        self.btnAns = QPushButton(self.widBot)
+        self.btnAns.setObjectName(u"btnAns")
+        self.hlBot.addWidget(self.btnAns)
+
         self.btnGrade = QPushButton(self.widBot)
         self.btnGrade.setObjectName(u"btnGrade")
         self.hlBot.addWidget(self.btnGrade)
@@ -291,6 +295,7 @@ class UI_Subject:
         self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\ub2f5", None))
         self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\ub2f5", None))
         self.btnClear.setText(QCoreApplication.translate("Input_Score", u"\ucd08\uae30\ud654", None))
+        self.btnAns.setText(QCoreApplication.translate("Input_Score", u"\ub2f5\uc548 \uc800\uc7a5", None))
         self.btnGrade.setText(QCoreApplication.translate("Input_Score", u"\ucc44\uc810", None))
 
 

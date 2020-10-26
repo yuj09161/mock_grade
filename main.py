@@ -172,6 +172,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 do_connect(priv_wid,next_wid)
         
         self.btnClear.clicked.connect(self.__clear)
+        self.btnAns.clicked.connect(self.__save_answer)
         self.btnGrade.clicked.connect(self.__get_input)
     
     def load_data(self,subject_data):
@@ -205,12 +206,60 @@ class Gb_Subject(QGroupBox,UI_Subject):
             lnCor.setText('')
             lnCor.setCursorPosition(0)
     
+    def __save_answer(self):
+        ans=[]
+        cor=[]
+        
+        for k,(lnAns,lnCor) in enumerate(zip(self.lnAns,self.lnCor)):
+            #응답,정답 불러오기
+            a=lnAns.text().replace(' ','')
+            b=lnCor.text().replace(' ','')
+            #응답,정답 오류검사->저장
+            if len(a)!=len(b):
+                err_win=DetailErr(
+                    self, 'ERROR', '값 입력 오류',
+                    f'입력 오류 @ 선택형, {k}:\n응답 수({len(a)}) != 정답 수({len(b)})'
+                )
+                err_win.exec_()
+                return
+            if a and b:
+                a=list(a)
+                b=list(b)
+                ans+=a; cor+=b
+        
+        if self.inputs_supply:
+            print('서답')
+            for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
+                #응답,정답 불러오기
+                a=lnAnsSupply.text()
+                b=lnCorSupply.text()
+                #응답,정답 저장
+                if a and b:
+                    ans.append(a)
+                    cor.append(b)
+        
+        self.__result=(ans,cor,-1)
+        
+        for lnAns,lnCor in zip(self.lnAns,self.lnCor):
+            lnAns.setEnabled(False)
+            lnCor.setEnabled(False)
+        if self.inputs_supply:
+            for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
+                lnAnsSupply.setEnabled(False)
+                lnCorSupply.setEnabled(False)
+        
+        reconnect_signal(self.btnGrade.clicked, self.__edit      )
+        
+        self.btnClear.setVisible(False)
+        self.btnAns.setVisible(False)
+        self.btnGrade.setText('채점')
+        
+        self.__parent.set_saved(False)
+    
     def __get_input(self):
         def show_err(detail_text):
             err_win=DetailErr(
-                self,
-                'ERROR',
-                '값 입력 오류',
+                self, 'ERROR', '값 입력 오류',
                 detail_text
             )
             err_win.exec_()
@@ -294,7 +343,24 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         self.btnClear.setText('점수 수정')
         self.btnGrade.setText('답안 수정')
-        self.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
+        self.btnAns.setVisible(False)
+        
+        if total_score>-1:
+            self.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
+        else:
+            for lnAns,lnCor in zip(self.lnAns,self.lnCor):
+                lnAns.setEnabled(False)
+                lnCor.setEnabled(False)
+            if self.inputs_supply:
+                for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
+                    lnAnsSupply.setEnabled(False)
+                    lnCorSupply.setEnabled(False)
+            
+            reconnect_signal(self.btnGrade.clicked, self.__edit)
+            
+            self.btnClear.setVisible(False)
+            self.btnGrade.setText('채점')
+        
         self.__parent.set_saved(False)
     
     def __edit(self):
@@ -309,7 +375,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
         reconnect_signal(self.btnClear.clicked, self.__clear    )
         reconnect_signal(self.btnGrade.clicked, self.__get_input)
         
+        self.btnClear.setVisible(True)
+        self.btnAns.setVisible(True)
         self.btnClear.setText('초기화')
+        self.btnAns.setText('답안 저장')
         self.btnGrade.setText('채점')
         self.lbRes.setText('')
 
