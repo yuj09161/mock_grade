@@ -179,15 +179,27 @@ class Gb_Subject(QGroupBox,UI_Subject):
         max_input_index=self.inputs_select
         
         for k,(lnAns,lnCor) in enumerate(zip(self.lnAns,self.lnCor)):
-            lnAns.setText(' '.join(subject_ans[k*5:min(k*5+5,max_input_index)]))
-            lnCor.setText(' '.join(subject_cor[k*5:min(k*5+5,max_input_index)]))
+            line_ans = subject_ans[k*5:min(k*5+5,max_input_index)]
+            line_cor = subject_cor[k*5:min(k*5+5,max_input_index)]
+            if line_ans:
+                lnAns.setText(' '.join(line_ans))
+            else:
+                lnAns.clear()
+            if line_cor:
+                lnCor.setText(' '.join(line_cor))
+            else:
+                lnCor.clear()
             
         if self.inputs_supply:
             for k,(lnAnsSupply,lnCorSupply) in enumerate(zip(self.lnAnsSupply,self.lnCorSupply)):
-                if k>len(subject_ans)-1-max_input_index:
-                    break
-                lnAnsSupply.setText(subject_ans[max_input_index+k])
-                lnCorSupply.setText(subject_cor[max_input_index+k])
+                if k<len(subject_ans)-max_input_index:
+                    lnAnsSupply.setText(subject_ans[max_input_index+k])
+                else:
+                    lnAnsSupply.clear()
+                if k<len(subject_cor)-max_input_index:
+                    lnCorSupply.setText(subject_cor[max_input_index+k])
+                else:
+                    lnCorSupply.clear()
         
         self.set_grade(
             tuple(bool(ans==cor) for ans,cor in zip(subject_ans,subject_cor)).count(False),
