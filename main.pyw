@@ -4,8 +4,7 @@ from PySide2.QtWidgets import *
 
 from UI import UI_Main,UI_Subject,UI_Input_Score
 
-import os,sys,re,json,traceback
-import random
+import os,sys,re,json,argparse,traceback
 
 
 #define subject code
@@ -207,6 +206,13 @@ class Gb_Subject(QGroupBox,UI_Subject):
             lnCor.setCursorPosition(0)
     
     def __save_answer(self):
+        def show_err(detail_text):
+            err_win=DetailErr(
+                self, 'ERROR', '값 입력 오류',
+                detail_text
+            )
+            err_win.exec_()
+        
         ans=[]
         cor=[]
         
@@ -226,28 +232,34 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 a=lnAnsSupply.text()
                 b=lnCorSupply.text()
                 #응답,정답 저장
-                if a and b:
+                if a:
                     ans.append(a)
+                if b:
                     cor.append(b)
         
-        print(ans,cor)
-        self.__result=(ans,cor,-1)
-        
-        for lnAns,lnCor in zip(self.lnAns,self.lnCor):
-            lnAns.setEnabled(False)
-            lnCor.setEnabled(False)
-        if self.inputs_supply:
-            for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
-                lnAnsSupply.setEnabled(False)
-                lnCorSupply.setEnabled(False)
-        
-        reconnect_signal(self.btnGrade.clicked, self.__edit      )
-        
-        self.btnClear.setVisible(False)
-        self.btnAns.setVisible(False)
-        self.btnGrade.setText('채점')
-        
-        self.__parent.set_saved(False)
+        if ans and not len(ans)==self.inputs_count:
+            show_err(f'입력 오류:\n응답 수({len(ans)})\n!= 총 문항수 ({self.inputs_count})')
+        elif cor and not len(cor)==self.inputs_count:
+            show_err(f'입력 오류:\n정답 수({len(cor)})\n!= 총 문항수 ({self.inputs_count})')
+        else:
+            print(ans,cor)
+            self.__result=(ans,cor,-1)
+            
+            for lnAns,lnCor in zip(self.lnAns,self.lnCor):
+                lnAns.setEnabled(False)
+                lnCor.setEnabled(False)
+            if self.inputs_supply:
+                for lnAnsSupply,lnCorSupply in zip(self.lnAnsSupply,self.lnCorSupply):
+                    lnAnsSupply.setEnabled(False)
+                    lnCorSupply.setEnabled(False)
+            
+            reconnect_signal(self.btnGrade.clicked, self.__edit      )
+            
+            self.btnClear.setVisible(False)
+            self.btnAns.setVisible(False)
+            self.btnGrade.setText('채점')
+            
+            self.__parent.set_saved(False)
     
     def __get_input(self):
         def show_err(detail_text):
@@ -285,9 +297,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
         
         if not (ans and cor):
             show_err('응답/정답 미입력')
-        elif not len(ans)==len(cor)==self.inputs_count:
-        #elif not len(ans)==len(cor):
-            show_err(f'입력 오류:\n응답 수({len(ans)})\n!= 정답 수({len(cor)})\n!= 총 문항수 ({self.inputs_count})')
+        elif not len(ans)==self.inputs_count:
+            show_err(f'입력 오류:\n응답 수({len(ans)})\n!= 총 문항수 ({self.inputs_count})')
+        elif not len(cor)==self.inputs_count:
+            show_err(f'입력 오류:\n정답 수({len(cor)})\n!= 총 문항수 ({self.inputs_count})')
         else:
             print(f'ans: {",".join(str(a) for a in ans)}\ncor: {",".join(str(c) for c in cor)}')
             error_num=[]
@@ -377,7 +390,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
 
 
 class Main(QMainWindow,UI_Main):
-    def __init__(self):
+    def __init__(self,file_name):
         super().__init__()
         self.setupUi(self)
         
@@ -415,24 +428,24 @@ class Main(QMainWindow,UI_Main):
         self.acOpenLicense.triggered.connect(self.__opensource)
         self.acLicense.triggered.connect(self.__license)
         
-        '''
-        while True:
-            try:
-                self.__loader(DEFAULT_FILE_NAME)
-                break
-            except:
-                err_win=DetailErr(
-                        self, 'Error', '파일 형식 오류',
-                        sys.exc_info(),
-                        buttons=QMessageBox.Retry|QMessageBox.Ignore|QMessageBox.Cancel
-                    )
-                reply=err_win.exec_()
-                if reply==QMessageBox.Ignore:
+        if file_name:
+            while True:
+                try:
+                    self.__loader(file_name)
                     break
-                elif reply==QMessageBox.Cancel:
-                    self.deleteLater()
-                    sys.exit(1)
-        '''
+                except:
+                    err_win=DetailErr(
+                            self, 'Error', '파일 불러오기 오류',
+                            sys.exc_info(),
+                            buttons=QMessageBox.Retry|QMessageBox.Ignore|QMessageBox.Cancel
+                        )
+                    reply=err_win.exec_()
+                    if reply==QMessageBox.Ignore:
+                        break
+                    elif reply==QMessageBox.Cancel:
+                        self.deleteLater()
+                        sys.exit(1)
+            self.__last_file=file_name
         
         self.__saved=True
     
@@ -458,7 +471,7 @@ class Main(QMainWindow,UI_Main):
                     gb_subject.load_data(subject_data)
         except:
             err_win=DetailErr(
-                    self, 'Error', '파일 불러오기 오류 발생',
+                    self, 'Error', '파일 불러오기 오류',
                     sys.exc_info()
                 )
             err_win.exec_()
@@ -478,12 +491,19 @@ class Main(QMainWindow,UI_Main):
             self.__saved=True
     
     def __saver(self,file_path):
-        result=[]
-        for gb_subject in self.__code_to_gb:
-            result.append(gb_subject.get_data())
-        
-        with open(file_path,'w',encoding='utf-8') as file:
-            json.dump(result,file,indent=4,ensure_ascii=False)
+        try:
+            result=[]
+            for gb_subject in self.__code_to_gb:
+                result.append(gb_subject.get_data())
+            
+            with open(file_path,'w',encoding='utf-8') as file:
+                json.dump(result,file,indent=4,ensure_ascii=False)
+        except:
+            err_win=DetailErr(
+                    self, 'Error', '파일 저장 오류',
+                    sys.exc_info()
+                )
+            err_win.exec_()
     
     def __opensource(self):
         if not self.__opensource_win:
@@ -568,7 +588,11 @@ class Input_Score(QMainWindow,UI_Input_Score):
 if __name__=='__main__':
     app=QApplication()
     
-    main=Main()
+    parser=argparse.ArgumentParser()
+    parser.add_argument('file_name',help='불러올 파일',nargs='?',default=None)
+    parsed_args=parser.parse_args()
+    
+    main=Main(parsed_args.file_name)
     main.show()
     
     sys.exit(app.exec_())
