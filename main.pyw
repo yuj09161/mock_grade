@@ -24,6 +24,24 @@ CURRENT_PATH      = os.path.abspath('./')+'\\'
 PROGRAM_PATH      = os.path.dirname(os.path.abspath(sys.argv[0]))+'\\'
 #DEFAULT_FILE_NAME ='./save.mockdata'
 
+APP_ID='hys.mock_grade'
+
+os_type=sys.platform
+USER_DIR=os.path.expanduser('~')
+if os_type=='win32':
+    CONFIG_DIR=os.environ.get('localappdata')+f'\\{APP_ID}\\'
+elif os_type=='linux':
+    CONFIG_DIR=USER_DIR+f'/.config/{APP_ID}/'
+elif os_type=='darwin':
+    CONFIG_DIR=USER_DIR+f'/Library/Application Support/{APP_ID}/'
+else:
+    CONFIG_DIR=None
+
+if CONFIG_DIR:
+    if not os.path.isdir(CONFIG_DIR):
+        os.mkdir(CONFIG_DIR)
+    CONFIG_FILE=CONFIG_DIR+'config.ini'
+
 
 def resize_height(window,*wid):
     app.processEvents()
@@ -233,9 +251,8 @@ class Gb_Subject(QGroupBox,UI_Subject):
             a=lnAns.text().replace(' ','')
             b=lnCor.text().replace(' ','')
             #응답,정답 저장
-            a=list(a)
-            b=list(b)
-            ans+=a; cor+=b
+            ans+=list(a)
+            cor+=list(b)
         
         if self.inputs_supply:
             print('서답')
@@ -402,12 +419,17 @@ class Gb_Subject(QGroupBox,UI_Subject):
 
 
 class Main(QMainWindow,UI_Main):
-    def __init__(self,file_name):
+    def __init__(self,file_name,last_dir):
+        def load_last():
+            self.btnLoadLast.deleteLater()
+            self.__loader(file_name)
+            self.__saved=True
+        
         super().__init__()
         self.setupUi(self)
         
-        self.__last_file = ''
-        #self.__last_file = DEFAULT_FILE_NAME
+        self.__last_file = file_name
+        self.__last_dir  = last_dir
         
         self.__opensource_win = None
         self.__license_win    = None
@@ -441,6 +463,10 @@ class Main(QMainWindow,UI_Main):
         self.acLicense.triggered.connect(self.__license)
         
         if file_name:
+            self.show_ask_load(self)
+            self.btnLoadLast.clicked.connect(load_last)
+            QTimer.singleShot(2000,self.btnLoadLast.deleteLater)
+            '''
             while True:
                 try:
                     self.__loader(file_name)
@@ -457,7 +483,7 @@ class Main(QMainWindow,UI_Main):
                     elif reply==QMessageBox.Cancel:
                         self.deleteLater()
                         sys.exit(1)
-            self.__last_file=file_name
+            '''
         
         self.__saved=True
     
@@ -466,27 +492,35 @@ class Main(QMainWindow,UI_Main):
         self.__saved=saved
     
     def __load_as(self,file_path):
-        file_path,_=QFileDialog.getOpenFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
+        file_path,_=QFileDialog.getOpenFileName(self,'저장',self.__last_dir,'모의고사 채점 파일 (*.mockdata)')
         if file_path:
-            self.__last_file=file_path
             self.__loader(file_path)
+            self.__last_file = file_path
+            self.__last_dir  = os.path.dirname(file_path)
             self.__saved=True
     
     def __loader(self,file_path):
-        try:
-            with open(file_path,'r',encoding='utf-8') as file:
-                data=json.load(file)
-            
-            for subject_code,subject_data in enumerate(data):
-                if subject_data:
-                    gb_subject=self.__code_to_gb[subject_code]
-                    gb_subject.load_data(subject_data)
-        except:
-            err_win=DetailErr(
-                    self, 'Error', '파일 불러오기 오류',
-                    sys.exc_info()
-                )
-            err_win.exec_()
+        while True:
+            try:
+                with open(file_path,'r',encoding='utf-8') as file:
+                    data=json.load(file)
+                
+                for subject_code,subject_data in enumerate(data):
+                    if subject_data:
+                        gb_subject=self.__code_to_gb[subject_code]
+                        gb_subject.load_data(subject_data)
+                
+                break
+            except:
+                err_win=DetailErr(
+                        self, 'Error', '파일 불러오기 오류',
+                        sys.exc_info(),
+                        buttons=QMessageBox.Retry|QMessageBox.Cancel
+                    )
+                reply=err_win.exec_()
+                
+                if reply==QMessageBox.Cancel:
+                    break
     
     def __save(self):
         if self.__last_file:
@@ -496,10 +530,11 @@ class Main(QMainWindow,UI_Main):
             self.__save_as()
     
     def __save_as(self):
-        file_path,_=QFileDialog.getSaveFileName(self,'저장','./','모의고사 채점 파일 (*.mockdata)')
+        file_path,_=QFileDialog.getSaveFileName(self,'저장',self.__last_dir,'모의고사 채점 파일 (*.mockdata)')
         if file_path:
             self.__saver(file_path)
-            self.__last_file=file_path
+            self.__last_file = file_path
+            self.__last_dir  = os.path.dirname(file_path)
             self.__saved=True
     
     def __saver(self,file_path):
@@ -536,14 +571,23 @@ class Main(QMainWindow,UI_Main):
         self.__license_win.show()
     
     def closeEvent(self,event):
+        def save_config():
+            if CONFIG_DIR:
+                config['config']={'last_file':self.__last_file, 'last_dir':self.__last_dir}
+                with open(CONFIG_FILE,'w',encoding='utf-8') as file:
+                    config.write(file)
+        
         if self.__saved:
+            save_config()
             event.accept()
         else:
             reply=QMessageBox.question(self,'종료','저장하지 않고 종료?',QMessageBox.Save|QMessageBox.Discard|QMessageBox.Cancel)
             if reply==QMessageBox.Save:
                 self.__save()
+                save_config()
                 event.accept()
             elif reply==QMessageBox.Discard:
+                save_config()
                 event.accept()
             elif reply==QMessageBox.Cancel:
                 event.ignore()
@@ -598,13 +642,30 @@ class Input_Score(QMainWindow,UI_Input_Score):
 
 
 if __name__=='__main__':
+    import ctypes,configparser
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+    
     app=QApplication()
     
     parser=argparse.ArgumentParser()
     parser.add_argument('file_name',help='불러올 파일',nargs='?',default=None)
     parsed_args=parser.parse_args()
+    file_name=parsed_args.file_name
     
-    main=Main(parsed_args.file_name)
+    file_name = None
+    last_dir  = USER_DIR
+    if CONFIG_DIR:
+        config=configparser.ConfigParser()
+        if os.path.isfile(CONFIG_FILE):
+            try:
+                config.read(CONFIG_FILE)
+                if not file_name:
+                    file_name=config['config']['last_file']
+                last_dir=config['config']['last_dir']
+            except:
+                pass
+    
+    main=Main(file_name,last_dir)
     main.show()
     
     sys.exit(app.exec_())
