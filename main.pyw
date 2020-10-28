@@ -425,6 +425,10 @@ class Main(QMainWindow,UI_Main):
             self.__loader(file_name)
             self.__saved=True
         
+        def last_reset():
+            self.btnLoadLast.deleteLater()
+            self.__last_file=''
+        
         super().__init__()
         self.setupUi(self)
         
@@ -465,27 +469,7 @@ class Main(QMainWindow,UI_Main):
         if file_name:
             self.show_ask_load(self)
             self.btnLoadLast.clicked.connect(load_last)
-            QTimer.singleShot(2000,self.btnLoadLast.deleteLater)
-            '''
-            while True:
-                try:
-                    self.__loader(file_name)
-                    break
-                except:
-                    err_win=DetailErr(
-                            self, 'Error', '파일 불러오기 오류',
-                            sys.exc_info(),
-                            buttons=QMessageBox.Retry|QMessageBox.Ignore|QMessageBox.Cancel
-                        )
-                    reply=err_win.exec_()
-                    if reply==QMessageBox.Ignore:
-                        break
-                    elif reply==QMessageBox.Cancel:
-                        self.deleteLater()
-                        sys.exit(1)
-            '''
-        
-        self.__saved=True
+            QTimer.singleShot(2000,last_reset)
     
     def set_saved(self,saved):
         assert type(saved) is bool
@@ -652,7 +636,7 @@ if __name__=='__main__':
     parsed_args=parser.parse_args()
     file_name=parsed_args.file_name
     
-    file_name = None
+    file_name = ''
     last_dir  = USER_DIR
     if CONFIG_DIR:
         config=configparser.ConfigParser()
