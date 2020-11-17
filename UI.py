@@ -96,13 +96,13 @@ class UI_Main(object):
         #QMetaObject.connectSlotsByName(Main)
     # setupUi
     
-    def show_ask_load(self, Main):
+    def show_ask_load(self, Main, SCALE):
         self.btnLoadLast=QPushButton(self)
         size=self.geometry().size()
         x=size.width()
         y=size.height()
-        w=150
-        h=25
+        w=150 * SCALE
+        h=23  * SCALE
         self.btnLoadLast.setGeometry(x-w-20,y-h-20,w,h)
         self.btnLoadLast.setText('이전 파일 불러오기')
 

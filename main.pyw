@@ -4,7 +4,7 @@ from PySide2.QtWidgets import *
 
 from UI import UI_Main,UI_Subject,UI_Input_Score
 
-import os,sys,re,json,argparse,traceback
+import os,sys,re,json,argparse,traceback,ctypes
 
 
 #define subject code
@@ -57,6 +57,45 @@ def reconnect_signal(signal,new_callable):
     except:
         pass
     signal.connect(new_callable)
+
+
+def scale(app_desktop=None,wid=None,*,base=1):
+    scale_win=Get_Scale(app_desktop,wid)
+    size=scale_win.get_resol()
+    return size[0]/RESOL[0]/base if -0.1<size[0]/RESOL[0]-size[1]/RESOL[1]<0.1 else 1
+
+
+GetSystemMetrics=ctypes.windll.user32.GetSystemMetrics
+RESOL=(GetSystemMetrics(0),GetSystemMetrics(1))
+
+class Get_Scale(QMainWindow):
+    def __init__(self,app_desktop,wid): 
+        if app_desktop and wid:
+            tmp=app_desktop().screenGeometry(wid)
+            self.__size=(tmp.width(),tmp.height())
+        elif app_desktop:
+            super().__init__()
+            self.setWindowFlags(Qt.FramelessWindowHint)
+            self.setStyleSheet('background:transparent')
+            
+            self.setGeometry(0,0,1,1)
+            self.show()
+            tmp=app_desktop().screenGeometry(self)
+            self.__size=(tmp.width(),tmp.height())
+            
+            self.destroy()
+        else:
+            super().__init__()
+            self.setWindowFlags(Qt.FramelessWindowHint)
+            self.setStyleSheet('background:transparent')
+            
+            self.showFullScreen()
+            self.__size=(self.size().width(),self.size().height())
+            
+            self.destroy()
+    
+    def get_resol(self):
+        return self.__size
 
 
 class DetailErr(QMessageBox):
@@ -426,11 +465,17 @@ class Main(QMainWindow,UI_Main):
             self.__saved=True
         
         def last_reset():
-            self.btnLoadLast.deleteLater()
-            self.__last_file=''
+            try:
+                self.btnLoadLast.deleteLater()
+            except:
+                pass
+            else:
+                self.__last_file=''
         
         super().__init__()
         self.setupUi(self)
+        
+        self.__saved = True
         
         self.__last_file = file_name
         self.__last_dir  = last_dir
@@ -467,7 +512,8 @@ class Main(QMainWindow,UI_Main):
         self.acLicense.triggered.connect(self.__license)
         
         if file_name:
-            self.show_ask_load(self)
+            SCALE=scale(app.desktop,self)
+            self.show_ask_load(self,SCALE)
             self.btnLoadLast.clicked.connect(load_last)
             QTimer.singleShot(2000,last_reset)
     
@@ -642,7 +688,8 @@ if __name__=='__main__':
         config=configparser.ConfigParser()
         if os.path.isfile(CONFIG_FILE):
             try:
-                config.read(CONFIG_FILE)
+                with open(CONFIG_FILE,'r',encoding='utf-8') as file:
+                    config.read_file(file)
                 if not file_name:
                     file_name=config['config']['last_file']
                 last_dir=config['config']['last_dir']
