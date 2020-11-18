@@ -704,11 +704,10 @@ if __name__=='__main__':
     app=QApplication()
     
     parser=argparse.ArgumentParser()
-    parser.add_argument('file_name',help='불러올 파일',nargs='?',default=None)
+    parser.add_argument('file_name',help='불러올 파일',nargs='?',default='')
     parsed_args=parser.parse_args()
     file_name=parsed_args.file_name
     
-    file_name = ''
     last_dir  = USER_DIR
     if CONFIG_DIR:
         config=configparser.ConfigParser()
