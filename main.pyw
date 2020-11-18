@@ -2,7 +2,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
-from UI import UI_Main,UI_Subject,UI_Input_Score
+from UI import UI_Main,UI_Subject,UI_Input_Score,Ui_Errors
 
 import os,sys,re,json,argparse,traceback,ctypes
 
@@ -191,6 +191,7 @@ class Gb_Subject(QGroupBox,UI_Subject):
         self.__parent       = parent
         self.__subject_code = subject_code
         self.__score_win    = None
+        self.__error_win    = None
         self.__result       = None
         
         self.inputs_select=shape[-1]
@@ -227,9 +228,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 QWidget.setTabOrder(priv_wid,next_wid)
                 do_connect(priv_wid,next_wid)
         
-        self.btnClear.clicked.connect(self.__clear)
-        self.btnAns.clicked.connect(self.__save_answer)
-        self.btnGrade.clicked.connect(self.__get_input)
+        self.btnLL.clicked.connect(self.__clear)
+        #self.btnLR.setVisible(False)
+        self.btnRL.clicked.connect(self.__save_answer)
+        self.btnRR.clicked.connect(self.__get_input)
     
     def load_data(self,subject_data):
         subject_ans,subject_cor,subject_score=subject_data
@@ -321,11 +323,12 @@ class Gb_Subject(QGroupBox,UI_Subject):
                     lnAnsSupply.setEnabled(False)
                     lnCorSupply.setEnabled(False)
             
-            reconnect_signal(self.btnGrade.clicked, self.__edit      )
+            reconnect_signal(self.btnRR.clicked, self.__edit      )
             
-            self.btnClear.setVisible(False)
-            self.btnAns.setVisible(False)
-            self.btnGrade.setText('채점')
+            self.btnLL.setVisible(False)
+            #self.btnLR.setVisible(False)
+            self.btnRL.setVisible(False)
+            self.btnRR.setText('채점')
             
             self.__parent.set_saved(False)
     
@@ -402,7 +405,6 @@ class Gb_Subject(QGroupBox,UI_Subject):
     def set_grade(self,error_count,total_score,subject_data=None):
         if subject_data:
             self.__result=subject_data+(total_score,)
-            print(self.__result)
         
         for lnAns,lnCor in zip(self.lnAns,self.lnCor):
             lnAns.setEnabled(False)
@@ -412,12 +414,17 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 lnAnsSupply.setEnabled(False)
                 lnCorSupply.setEnabled(False)
         
-        reconnect_signal(self.btnClear.clicked, self.__get_input )
-        reconnect_signal(self.btnGrade.clicked, self.__edit      )
+        reconnect_signal(self.btnLL.clicked, self.__get_input )
+        reconnect_signal(self.btnRR.clicked, self.__edit      )
         
-        self.btnClear.setText('점수 수정')
-        self.btnGrade.setText('답안 수정')
-        self.btnAns.setVisible(False)
+        self.btnLL.setText('점수 수정')
+        self.btnRR.setText('답안 수정')
+        self.btnRL.setVisible(False)
+        
+        if -1<total_score<100:
+            self.btnRL.setVisible(True)
+            self.btnRL.setText('상세보기')
+            reconnect_signal(self.btnRL.clicked,self.__show_detail)
         
         if total_score>-1:
             self.lbRes.setText(f'오답 수: {error_count} / 점수: {total_score}')
@@ -430,10 +437,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
                     lnAnsSupply.setEnabled(False)
                     lnCorSupply.setEnabled(False)
             
-            reconnect_signal(self.btnGrade.clicked, self.__edit)
+            reconnect_signal(self.btnRR.clicked, self.__edit)
             
-            self.btnClear.setVisible(False)
-            self.btnGrade.setText('채점')
+            self.btnLL.setVisible(False)
+            self.btnRR.setText('채점')
         
         self.__parent.set_saved(False)
     
@@ -446,16 +453,24 @@ class Gb_Subject(QGroupBox,UI_Subject):
                 lnAnsSupply.setEnabled(True)
                 lnCorSupply.setEnabled(True)
         
-        reconnect_signal(self.btnClear.clicked, self.__clear    )
-        reconnect_signal(self.btnGrade.clicked, self.__get_input)
+        reconnect_signal(self.btnLL.clicked, self.__clear    )
+        reconnect_signal(self.btnRR.clicked, self.__get_input)
         
-        self.btnClear.setVisible(True)
-        self.btnAns.setVisible(True)
-        self.btnClear.setText('초기화')
-        self.btnAns.setText('답안 저장')
-        self.btnGrade.setText('채점')
+        self.btnLL.setVisible(True)
+        self.btnRL.setVisible(True)
+        self.btnLL.setText('초기화')
+        self.btnRL.setText('답안 저장')
+        self.btnRR.setText('채점')
         self.lbRes.setText('')
-
+    
+    def __show_detail(self):
+        errors=[]
+        for k,(ans,cor) in enumerate(zip(self.__result[0],self.__result[1])):
+            if ans!=cor:
+                errors.append((str(k+1),str(ans),str(cor)))
+        
+        self.__error_win=Errors(self.lbRes.text(),errors)
+        self.__error_win.show()
 
 class Main(QMainWindow,UI_Main):
     def __init__(self,file_name,last_dir):
@@ -669,6 +684,17 @@ class Input_Score(QMainWindow,UI_Input_Score):
                 sys.exc_info(),
             )
             err_win.exec_()
+
+
+class Errors(QMainWindow,Ui_Errors):
+    def __init__(self,result_str,error_data):
+        super().__init__()
+        self.setupUi(self,error_data)
+        self.lbResult.setText(result_str)
+        
+        resize_height(self)
+        
+        self.btnClose.clicked.connect(self.deleteLater)
 
 
 if __name__=='__main__':

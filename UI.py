@@ -275,9 +275,15 @@ class UI_Subject:
         self.hlBot.setObjectName(u"hlBot")
         self.hlBot.setContentsMargins(0, 0, 0, 0)
         
-        self.btnClear = QPushButton(self.widBot)
-        self.btnClear.setObjectName(u"btnClear")
-        self.hlBot.addWidget(self.btnClear)
+        self.btnLL = QPushButton(self.widBot)
+        self.btnLL.setObjectName(u"btnLL")
+        self.hlBot.addWidget(self.btnLL)
+
+        '''
+        self.btnLR = QPushButton(self.widBot)
+        self.btnLR.setObjectName(u"btnLR")
+        self.hlBot.addWidget(self.btnLR)
+        '''
 
         spH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.hlBot.addItem(spH)
@@ -287,13 +293,13 @@ class UI_Subject:
 
         self.hlBot.addItem(spH)
 
-        self.btnAns = QPushButton(self.widBot)
-        self.btnAns.setObjectName(u"btnAns")
-        self.hlBot.addWidget(self.btnAns)
+        self.btnRL = QPushButton(self.widBot)
+        self.btnRL.setObjectName(u"btnRL")
+        self.hlBot.addWidget(self.btnRL)
 
-        self.btnGrade = QPushButton(self.widBot)
-        self.btnGrade.setObjectName(u"btnGrade")
-        self.hlBot.addWidget(self.btnGrade)
+        self.btnRR = QPushButton(self.widBot)
+        self.btnRR.setObjectName(u"btnRR")
+        self.hlBot.addWidget(self.btnRR)
         
         self.glMain.addWidget(self.widBot, (row_count+sp_supply)*3, 0, 1, column_count+1)
         
@@ -304,9 +310,10 @@ class UI_Subject:
         self.lbNum.setText(QCoreApplication.translate("Main", u"\ubc88\ud638", None))
         self.lbAns.setText(QCoreApplication.translate("Main", u"\uc751\ub2f5", None))
         self.lbCor.setText(QCoreApplication.translate("Main", u"\uc815\ub2f5", None))
-        self.btnClear.setText(QCoreApplication.translate("Input_Score", u"\ucd08\uae30\ud654", None))
-        self.btnAns.setText(QCoreApplication.translate("Input_Score", u"\ub2f5\uc548 \uc800\uc7a5", None))
-        self.btnGrade.setText(QCoreApplication.translate("Input_Score", u"\ucc44\uc810", None))
+        self.btnLL.setText(QCoreApplication.translate("Input_Score", u"\ucd08\uae30\ud654", None))
+        #self.btnLR.setText(QCoreApplication.translate("Input_Score", u"\ucd08\uae30\ud654", None))
+        self.btnRL.setText(QCoreApplication.translate("Input_Score", u"\ub2f5\uc548 \uc800\uc7a5", None))
+        self.btnRR.setText(QCoreApplication.translate("Input_Score", u"\ucc44\uc810", None))
 
 
 class UI_Input_Score(object):
@@ -383,4 +390,85 @@ class UI_Input_Score(object):
         self.lbPoint.setText(QCoreApplication.translate("Input_Score", u"\ubc30\uc810", None))
         self.btnCancel.setText(QCoreApplication.translate("Input_Score", u"\ucde8\uc18c", None))
         self.btnNext.setText(QCoreApplication.translate("Input_Score", u"\ub2e4\uc74c", None))
+    # retranslateUi
+
+
+class Ui_Errors(object):
+    def setupUi(self, Errors, err_data):
+        if not Errors.objectName():
+            Errors.setObjectName(u"Errors")
+        Errors.resize(300, 125)
+        self.centralwidget = QWidget(Errors)
+        self.centralwidget.setObjectName(u"centralwidget")
+        self.glCent = QGridLayout(self.centralwidget)
+        self.glCent.setObjectName(u"glCent")
+        
+        self.lbResult = QLabel(self.centralwidget)
+        self.lbResult.setObjectName(u"lbResult")
+        self.lbResult.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbResult, 0, 0, 1, 3)
+        
+        self.lbTitleNum = QLabel(self.centralwidget)
+        self.lbTitleNum.setObjectName(u"lbTitleNum")
+        self.lbTitleNum.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbTitleNum, 1, 0, 1, 1)
+
+        self.lbTitleCor = QLabel(self.centralwidget)
+        self.lbTitleCor.setObjectName(u"lbTitleCor")
+        self.lbTitleCor.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbTitleCor, 1, 2, 1, 1)
+
+        self.lbTitleAns = QLabel(self.centralwidget)
+        self.lbTitleAns.setObjectName(u"lbTitleAns")
+        self.lbTitleAns.setAlignment(Qt.AlignCenter)
+        self.glCent.addWidget(self.lbTitleAns, 1, 1, 1, 1)
+        
+        for k,(num,ans,cor) in enumerate(err_data):
+            lbNum = QLabel(self.centralwidget)
+            lbNum.setObjectName(u"lbNum")
+            lbNum.setAlignment(Qt.AlignCenter)
+            lbNum.setText(num)
+            self.glCent.addWidget(lbNum, k+2, 0, 1, 1)
+
+            lbCor = QLabel(self.centralwidget)
+            lbCor.setObjectName(u"lbCor")
+            lbCor.setAlignment(Qt.AlignCenter)
+            lbCor.setText(ans)
+            self.glCent.addWidget(lbCor, k+2, 2, 1, 1)
+
+            lbAns = QLabel(self.centralwidget)
+            lbAns.setObjectName(u"lbAns")
+            lbAns.setAlignment(Qt.AlignCenter)
+            lbAns.setText(cor)
+            self.glCent.addWidget(lbAns, k+2, 1, 1, 1)
+
+        self.widBot = QWidget(self.centralwidget)
+        self.widBot.setObjectName(u"widBot")
+        self.horizontalLayout = QHBoxLayout(self.widBot)
+        self.horizontalLayout.setSpacing(0)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        
+        self.spBotH = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(self.spBotH)
+
+        self.btnClose = QPushButton(self.widBot)
+        self.btnClose.setObjectName(u"btnClose")
+        self.horizontalLayout.addWidget(self.btnClose)
+
+        self.glCent.addWidget(self.widBot, k+3, 0, 1, 3)
+
+        Errors.setCentralWidget(self.centralwidget)
+
+        self.retranslateUi(Errors)
+
+        QMetaObject.connectSlotsByName(Errors)
+    # setupUi
+
+    def retranslateUi(self, Errors):
+        Errors.setWindowTitle(QCoreApplication.translate("Errors", u"오답 상세", None))
+        self.lbTitleNum.setText(QCoreApplication.translate("Errors", u"\ubc88\ud638", None))
+        self.lbTitleCor.setText(QCoreApplication.translate("Errors", u"\uc815\ub2f5", None))
+        self.lbTitleAns.setText(QCoreApplication.translate("Errors", u"\uc751\ub2f5", None))
+        self.btnClose.setText(QCoreApplication.translate("Errors", u"\ub2eb\uae30", None))
     # retranslateUi
