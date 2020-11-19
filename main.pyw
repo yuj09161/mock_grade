@@ -473,10 +473,10 @@ class Gb_Subject(QGroupBox,UI_Subject):
         self.__error_win.show()
 
 class Main(QMainWindow,UI_Main):
-    def __init__(self,file_name,last_dir):
+    def __init__(self,open_file,last_file,last_dir):
         def load_last():
             self.btnLoadLast.deleteLater()
-            self.__loader(file_name)
+            self.__loader(last_file)
             self.__saved=True
         
         def last_reset():
@@ -492,7 +492,10 @@ class Main(QMainWindow,UI_Main):
         
         self.__saved = True
         
-        self.__last_file = file_name
+        if open_file:
+            self.__last_file = open_file
+        else:
+            self.__last_file = last_file
         self.__last_dir  = last_dir
         
         self.__opensource_win = None
@@ -526,7 +529,10 @@ class Main(QMainWindow,UI_Main):
         self.acOpenLicense.triggered.connect(self.__opensource)
         self.acLicense.triggered.connect(self.__license)
         
-        if file_name:
+        if open_file:
+            self.__loader(open_file)
+            self.__saved=True
+        elif last_file:
             SCALE=scale(app.desktop,self)
             self.show_ask_load(self,SCALE)
             self.btnLoadLast.clicked.connect(load_last)
@@ -706,22 +712,22 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('file_name',help='불러올 파일',nargs='?',default='')
     parsed_args=parser.parse_args()
-    file_name=parsed_args.file_name
+    open_file=parsed_args.file_name
     
     last_dir  = USER_DIR
+    last_file = ''
     if CONFIG_DIR:
         config=configparser.ConfigParser()
         if os.path.isfile(CONFIG_FILE):
             try:
                 with open(CONFIG_FILE,'r',encoding='utf-8') as file:
                     config.read_file(file)
-                if not file_name:
-                    file_name=config['config']['last_file']
+                last_file=config['config']['last_file']
                 last_dir=config['config']['last_dir']
             except:
                 pass
     
-    main=Main(file_name,last_dir)
+    main=Main(open_file,last_file,last_dir)
     main.show()
     
     sys.exit(app.exec_())
