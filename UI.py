@@ -4,6 +4,10 @@ from PySide2.QtWidgets import *
 
 from math import ceil
 
+'''
+To PySide6: QRegExp(Validator)->QRegularExpression(Validator)
+'''
+
 
 sizePolicy_PF = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 sizePolicy_PF.setHorizontalStretch(0)

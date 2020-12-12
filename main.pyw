@@ -4,7 +4,7 @@ from PySide2.QtWidgets import *
 
 from UI import UI_Main,UI_Subject,UI_Input_Score,Ui_Errors
 
-import os,sys,re,json,argparse,traceback,ctypes
+import os,sys,re,json,traceback,ctypes
 
 
 #define subject code
@@ -59,11 +59,14 @@ def reconnect_signal(signal,new_callable):
     signal.connect(new_callable)
 
 
+def scale(*,base=1):
+    return app.screens()[0].devicePixelRatio()/base
+
+"""
 def scale(app_desktop=None,wid=None,*,base=1):
     scale_win=Get_Scale(app_desktop,wid)
     size=scale_win.get_resol()
     return size[0]/RESOL[0]/base if -0.1<size[0]/RESOL[0]-size[1]/RESOL[1]<0.1 else 1
-
 
 GetSystemMetrics=ctypes.windll.user32.GetSystemMetrics
 RESOL=(GetSystemMetrics(0),GetSystemMetrics(1))
@@ -96,6 +99,7 @@ class Get_Scale(QMainWindow):
     
     def get_resol(self):
         return self.__size
+"""
 
 
 class DetailErr(QMessageBox):
@@ -475,16 +479,16 @@ class Gb_Subject(QGroupBox,UI_Subject):
 class Main(QMainWindow,UI_Main):
     def __init__(self,open_file,last_file,last_dir):
         def load_last():
-            self.btnLoadLast.deleteLater()
+            self.__btnLoadLast.deleteLater()
             self.__loader(last_file)
             self.__saved=True
         
         def last_reset():
             try:
-                self.btnLoadLast.deleteLater()
+                self.__btnLoadLast.deleteLater()
             except:
                 pass
-            else:
+            finally:
                 self.__last_file=''
         
         super().__init__()
@@ -533,9 +537,10 @@ class Main(QMainWindow,UI_Main):
             self.__loader(open_file)
             self.__saved=True
         elif last_file:
-            SCALE=scale(app.desktop,self)
+            #SCALE=scale(app.desktop,self)
+            SCALE=scale()
             self.show_ask_load(self,SCALE)
-            self.btnLoadLast.clicked.connect(load_last)
+            self.__btnLoadLast.clicked.connect(load_last)
             QTimer.singleShot(2000,last_reset)
     
     def set_saved(self,saved):
@@ -704,7 +709,7 @@ class Errors(QMainWindow,Ui_Errors):
 
 
 if __name__=='__main__':
-    import ctypes,configparser
+    import argparse,configparser
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
     
     app=QApplication()
